@@ -203,7 +203,7 @@ const TradingDashboard = () => {
   const currentCoinData = marketData?.coins?.find(c => c.coin_id === selectedCoin.id);
 
   return (
-    <div className="min-h-screen bg-background" data-testid="trading-dashboard">
+    <div className="min-h-screen bg-background flex flex-col" data-testid="trading-dashboard">
       {/* Header */}
       <Header 
         currentCoin={currentCoinData}
@@ -211,7 +211,7 @@ const TradingDashboard = () => {
       />
 
       {/* Main Content */}
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 h-[calc(100vh-4rem)]">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 10rem)' }}>
         {/* Left: Asset Selector + Chart */}
         <div className="lg:col-span-9 flex flex-col gap-4 h-full overflow-hidden">
           {/* Asset & Timeframe Selection */}
