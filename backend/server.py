@@ -205,6 +205,7 @@ async def get_market_prices(
 async def get_top_coins(limit: int = 20, vs_currency: str = "usd"):
     """Get top cryptocurrencies by market cap"""
     try:
+        cache_key = f"top_coins_{limit}_{vs_currency}"
         data = await fetch_coingecko("/coins/markets", {
             "vs_currency": vs_currency,
             "order": "market_cap_desc",
@@ -212,7 +213,7 @@ async def get_top_coins(limit: int = 20, vs_currency: str = "usd"):
             "page": 1,
             "sparkline": "false",
             "price_change_percentage": "24h"
-        })
+        }, cache_key=cache_key)
         
         coins = []
         for coin in data:
