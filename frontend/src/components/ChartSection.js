@@ -1,79 +1,12 @@
-import React, { useEffect, useRef, memo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 
-const ChartSection = memo(({ selectedCoin, timeframe, coinData, isLoading }) => {
-  const containerRef = useRef(null);
-  const scriptRef = useRef(null);
-  const [widgetReady, setWidgetReady] = useState(false);
-
-  useEffect(() => {
-    // Skip if container not ready
-    if (!containerRef.current) return;
-
-    // Clean up previous widget
-    const container = containerRef.current;
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
-    setWidgetReady(false);
-
-    // Create wrapper div
-    const widgetWrapper = document.createElement('div');
-    widgetWrapper.className = 'tradingview-widget-container__widget';
-    widgetWrapper.style.height = '100%';
-    widgetWrapper.style.width = '100%';
-    
-    // Create script element
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-    script.type = 'text/javascript';
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: `BINANCE:${selectedCoin.symbol}USDT`,
-      interval: timeframe,
-      timezone: "Etc/UTC",
-      theme: "dark",
-      style: "1",
-      locale: "en",
-      enable_publishing: false,
-      backgroundColor: "rgba(5, 5, 5, 1)",
-      gridColor: "rgba(39, 39, 42, 0.3)",
-      hide_top_toolbar: false,
-      hide_legend: false,
-      save_image: false,
-      calendar: false,
-      hide_volume: false,
-      support_host: "https://www.tradingview.com",
-      studies: [
-        "MASimple@tv-basicstudies",
-        "RSI@tv-basicstudies"
-      ]
-    });
-
-    script.onload = () => {
-      setWidgetReady(true);
-    };
-
-    scriptRef.current = script;
-
-    // Append to container
-    container.appendChild(widgetWrapper);
-    container.appendChild(script);
-
-    // Cleanup function
-    return () => {
-      if (container) {
-        try {
-          while (container.firstChild) {
-            container.removeChild(container.firstChild);
-          }
-        } catch (e) {
-          console.log('Cleanup error:', e);
-        }
-      }
-    };
-  }, [selectedCoin.symbol, timeframe]);
+const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading }) => {
+  // Create unique key to force remount when coin/timeframe changes
+  const widgetKey = useMemo(() => 
+    `${selectedCoin.symbol}-${timeframe}-${Date.now()}`,
+    [selectedCoin.symbol, timeframe]
+  );
 
   const priceChange = coinData?.price_change_percentage_24h || 0;
   const isPositive = priceChange >= 0;
@@ -142,21 +75,81 @@ const ChartSection = memo(({ selectedCoin, timeframe, coinData, isLoading }) => 
         </div>
       </div>
 
-      {/* TradingView Widget */}
-      <div 
-        ref={containerRef} 
-        className="tradingview-widget-container h-full w-full pt-20"
-      >
-        {isLoading && !widgetReady && (
+      {/* TradingView Widget using iframe */}
+      <div className="h-full w-full pt-20">
+        {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
+        ) : (
+          <TradingViewWidget 
+            key={widgetKey}
+            symbol={selectedCoin.symbol} 
+            interval={timeframe} 
+          />
         )}
       </div>
     </div>
   );
-});
+};
 
-ChartSection.displayName = 'ChartSection';
+// Separate component for the widget to isolate DOM manipulation
+const TradingViewWidget = ({ symbol, interval }) => {
+  const widgetHtml = useMemo(() => {
+    const config = {
+      autosize: true,
+      symbol: `BINANCE:${symbol}USDT`,
+      interval: interval,
+      timezone: "Etc/UTC",
+      theme: "dark",
+      style: "1",
+      locale: "en",
+      enable_publishing: false,
+      backgroundColor: "rgba(5, 5, 5, 1)",
+      gridColor: "rgba(39, 39, 42, 0.3)",
+      hide_top_toolbar: false,
+      hide_legend: false,
+      save_image: false,
+      calendar: false,
+      hide_volume: false,
+      support_host: "https://www.tradingview.com",
+      studies: ["MASimple@tv-basicstudies", "RSI@tv-basicstudies"]
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { margin: 0; padding: 0; background: #050505; }
+            .tradingview-widget-container { height: 100vh; width: 100%; }
+          </style>
+        </head>
+        <body>
+          <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+              ${JSON.stringify(config)}
+            </script>
+          </div>
+        </body>
+      </html>
+    `;
+  }, [symbol, interval]);
+
+  return (
+    <iframe
+      title="TradingView Chart"
+      srcDoc={widgetHtml}
+      style={{ 
+        width: '100%', 
+        height: '100%', 
+        border: 'none',
+        backgroundColor: '#050505'
+      }}
+      sandbox="allow-scripts allow-same-origin"
+    />
+  );
+};
 
 export default ChartSection;
