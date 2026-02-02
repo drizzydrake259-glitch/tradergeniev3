@@ -1,0 +1,166 @@
+{
+  "identity": {
+    "name": "E1",
+    "role": "Anti-AI Designer",
+    "principles": [
+      "Fusion over Imitation",
+      "Emotion First",
+      "Content is King",
+      "Zoom In",
+      "Negative Space",
+      "Contrast"
+    ]
+  },
+  "project": {
+    "name": "AI Trading Assistant",
+    "type": "Single Page Dashboard",
+    "theme": "dark",
+    "emotional_tone": "Cyber-Tactical: Precision, Speed, Authority",
+    "target_audience": "Crypto Day Traders, Swing Traders"
+  },
+  "typography": {
+    "fonts": {
+      "headings": "Barlow Condensed, sans-serif",
+      "body": "Manrope, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "weights": {
+      "headings": "700",
+      "body": "400",
+      "bold": "600"
+    },
+    "sizes": {
+      "h1": "text-4xl md:text-5xl tracking-tight",
+      "h2": "text-2xl md:text-3xl tracking-tight",
+      "h3": "text-xl tracking-normal",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm text-muted-foreground",
+      "mono_lg": "text-lg tracking-wide",
+      "mono_sm": "text-xs tracking-wide"
+    },
+    "instructions": "Import fonts from Google Fonts in index.css. Use Barlow Condensed for all section titles and asset names. Use JetBrains Mono for ALL prices, percentages, and signal data. Use Manrope for UI labels and descriptions."
+  },
+  "colors": {
+    "palette": {
+      "background": "#050505",
+      "foreground": "#FAFAFA",
+      "card": "#0A0A0A",
+      "card_foreground": "#FAFAFA",
+      "popover": "#0A0A0A",
+      "popover_foreground": "#FAFAFA",
+      "primary": "#00E599",
+      "primary_foreground": "#000000",
+      "secondary": "#1A1A1A",
+      "secondary_foreground": "#FAFAFA",
+      "muted": "#1A1A1A",
+      "muted_foreground": "#A1A1AA",
+      "accent": "#007AFF",
+      "accent_foreground": "#FAFAFA",
+      "destructive": "#FF3B30",
+      "destructive_foreground": "#FAFAFA",
+      "border": "#27272A",
+      "input": "#27272A",
+      "ring": "#00E599"
+    },
+    "semantic": {
+      "buy": "#00E599",
+      "sell": "#FF3B30",
+      "neutral": "#E5E5EA",
+      "warning": "#FFD60A",
+      "info": "#007AFF"
+    },
+    "gradients": {
+      "signal_glow": "linear-gradient(90deg, rgba(0,229,153,0.1) 0%, rgba(0,0,0,0) 100%)",
+      "tracing_beam": "linear-gradient(90deg, transparent, #00E599, transparent)"
+    }
+  },
+  "layout": {
+    "grid_system": "Bento Grid Mode B (High Density)",
+    "spacing": {
+      "container_padding": "p-4 md:p-6",
+      "gap": "gap-4",
+      "internal_padding": "p-4"
+    },
+    "structure": {
+      "header": "h-16 border-b border-border/40 flex items-center justify-between px-6 bg-background/80 backdrop-blur-xl sticky top-0 z-50",
+      "main_grid": "grid grid-cols-1 lg:grid-cols-12 gap-4 h-[calc(100vh-4rem)] p-4 overflow-hidden",
+      "chart_section": "col-span-1 lg:col-span-9 row-span-2 h-full rounded-xl border border-border/40 bg-card overflow-hidden relative",
+      "sidebar": "col-span-1 lg:col-span-3 row-span-2 h-full flex flex-col gap-4 overflow-y-auto pr-1",
+      "bottom_ticker": "fixed bottom-0 left-0 right-0 h-8 bg-background border-t border-border/40 flex items-center z-40"
+    }
+  },
+  "components": {
+    "buttons": {
+      "default": "rounded-md font-medium transition-all active:scale-95",
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_rgba(0,229,153,0.3)]",
+      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+      "ghost": "hover:bg-accent hover:text-accent-foreground"
+    },
+    "cards": {
+      "base": "rounded-xl border border-border/40 bg-card text-card-foreground shadow-sm",
+      "signal": "relative overflow-hidden border-l-4 border-l-primary bg-card/50 hover:bg-card/80 transition-colors cursor-pointer group"
+    },
+    "inputs": {
+      "base": "h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "badges": {
+      "base": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+      "buy": "border-transparent bg-primary/20 text-primary hover:bg-primary/30",
+      "sell": "border-transparent bg-destructive/20 text-destructive hover:bg-destructive/30"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-background/70 border border-white/10",
+    "tracing_beam": "Use framer-motion to animate a gradient border on active signal cards.",
+    "noise_texture": "Add a fixed opacity-5 noise overlay to the entire app background for texture.",
+    "glow_effects": "Use drop-shadow-[0_0_10px_rgba(var(--primary),0.5)] for key metrics."
+  },
+  "assets": {
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1764258560730-d167e5deda65?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGRpZ2l0YWwlMjBkYXRhJTIwc3RyZWFtJTIwZGFyayUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzcwMDA0ODMwfDA&ixlib=rb-4.1.0&q=85",
+        "description": "Abstract blue data stream background",
+        "usage": "Subtle background for the loading screen or hero overlay"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1639454276085-9f55d2db6570?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwxfHxiaXRjb2luJTIwZXRoZXJldW0lMjBjcnlwdG8lMjBjb2lucyUyMGRhcmslMjBhZXN0aGV0aWN8ZW58MHx8fHwxNzcwMDA0ODMyfDA&ixlib=rb-4.1.0&q=85",
+        "description": "Crypto coins stack",
+        "usage": "Placeholder for asset selector if icons fail"
+      }
+    ],
+    "icons": "Use Lucide React (default). For crypto specific icons, use simple text tickers or fetch from CoinGecko API."
+  },
+  "motion": {
+    "transitions": "transition-all duration-200 ease-out",
+    "hover": "hover:-translate-y-0.5 hover:shadow-lg",
+    "entrance": "animate-in fade-in slide-in-from-bottom-4 duration-500",
+    "list_stagger": "stagger-children-100"
+  },
+  "accessibility": {
+    "contrast": "Ensure all text meets WCAG AA (4.5:1). Use APCA for critical data.",
+    "focus": "Visible ring-2 ring-primary on all interactive elements.",
+    "reduced_motion": "Respect prefers-reduced-motion media query."
+  },
+  "instructions_to_main_agent": [
+    "1. Install fonts: Barlow Condensed (400, 600, 700), JetBrains Mono (400, 500), Manrope (400, 600).",
+    "2. Update tailwind.config.js with the provided color palette and font families.",
+    "3. Create a 'Layout' component that enforces the Bento Grid structure.",
+    "4. Build the 'SignalCard' component with the 'tracing beam' effect using framer-motion (if available) or CSS keyframes.",
+    "5. Use the TradingView Lightweight Charts or Widget for the center piece.",
+    "6. Ensure the 'Market Intelligence' feed at the bottom is a smooth marquee.",
+    "7. Apply the 'noise_texture' to the body background.",
+    "8. ALL interactive elements must have data-testid attributes."
+  ],
+  "universal_guidelines": [
+    "Avoid generic 'AI slop' designs.",
+    "Do not use gradients for dark colors.",
+    "Create depth with z-index and glassmorphism.",
+    "No universal 'transition: all'.",
+    "No center-aligned app containers.",
+    "Use pill-shaped or sharp buttons.",
+    "No AI emoji icons.",
+    "Micro-animations for every interaction.",
+    "Generous spacing (2-3x normal).",
+    "Use Sonner for toasts."
+  ]
+}
