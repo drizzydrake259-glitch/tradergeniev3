@@ -240,7 +240,8 @@ async def get_top_coins(limit: int = 20, vs_currency: str = "usd"):
 async def get_trending_coins():
     """Get trending cryptocurrencies"""
     try:
-        data = await fetch_coingecko("/search/trending")
+        cache_key = "trending"
+        data = await fetch_coingecko("/search/trending", cache_key=cache_key)
         
         trending = []
         for item in data.get('coins', [])[:10]:
