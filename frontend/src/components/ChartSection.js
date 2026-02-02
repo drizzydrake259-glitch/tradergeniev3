@@ -1,16 +1,29 @@
-import React, { useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, memo, useState } from 'react';
 import { Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 
 const ChartSection = memo(({ selectedCoin, timeframe, coinData, isLoading }) => {
   const containerRef = useRef(null);
+  const scriptRef = useRef(null);
+  const [widgetReady, setWidgetReady] = useState(false);
 
   useEffect(() => {
-    // Clear previous widget
-    if (containerRef.current) {
-      containerRef.current.innerHTML = '';
-    }
+    // Skip if container not ready
+    if (!containerRef.current) return;
 
-    // Create TradingView Widget
+    // Clean up previous widget
+    const container = containerRef.current;
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+    setWidgetReady(false);
+
+    // Create wrapper div
+    const widgetWrapper = document.createElement('div');
+    widgetWrapper.className = 'tradingview-widget-container__widget';
+    widgetWrapper.style.height = '100%';
+    widgetWrapper.style.width = '100%';
+    
+    // Create script element
     const script = document.createElement('script');
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
     script.type = 'text/javascript';
@@ -38,14 +51,28 @@ const ChartSection = memo(({ selectedCoin, timeframe, coinData, isLoading }) => 
       ]
     });
 
-    const widgetContainer = document.createElement('div');
-    widgetContainer.className = 'tradingview-widget-container__widget';
-    widgetContainer.style.height = '100%';
-    widgetContainer.style.width = '100%';
+    script.onload = () => {
+      setWidgetReady(true);
+    };
 
-    containerRef.current.appendChild(widgetContainer);
-    containerRef.current.appendChild(script);
+    scriptRef.current = script;
 
+    // Append to container
+    container.appendChild(widgetWrapper);
+    container.appendChild(script);
+
+    // Cleanup function
+    return () => {
+      if (container) {
+        try {
+          while (container.firstChild) {
+            container.removeChild(container.firstChild);
+          }
+        } catch (e) {
+          console.log('Cleanup error:', e);
+        }
+      }
+    };
   }, [selectedCoin.symbol, timeframe]);
 
   const priceChange = coinData?.price_change_percentage_24h || 0;
@@ -118,10 +145,9 @@ const ChartSection = memo(({ selectedCoin, timeframe, coinData, isLoading }) => 
       {/* TradingView Widget */}
       <div 
         ref={containerRef} 
-        className="tradingview-widget-container h-full w-full"
-        style={{ paddingTop: '80px' }}
+        className="tradingview-widget-container h-full w-full pt-20"
       >
-        {isLoading && (
+        {isLoading && !widgetReady && (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
