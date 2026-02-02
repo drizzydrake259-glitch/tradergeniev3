@@ -461,7 +461,7 @@ async def get_market_intelligence():
     """Get market intelligence overview including simulated funding rates and OI"""
     try:
         # Fetch global data
-        global_data = await fetch_coingecko("/global")
+        global_data = await fetch_coingecko("/global", cache_key="global_intelligence")
         gd = global_data.get('data', {})
         
         # Fetch BTC and ETH for dominance
@@ -469,7 +469,7 @@ async def get_market_intelligence():
             "vs_currency": "usd",
             "ids": "bitcoin,ethereum",
             "order": "market_cap_desc"
-        })
+        }, cache_key="btc_eth_intelligence")
         
         # Simulate funding rates and open interest (these would come from futures exchanges)
         import random
