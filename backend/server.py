@@ -306,7 +306,8 @@ async def get_coin_details(coin_id: str):
 async def get_global_data():
     """Get global cryptocurrency market data"""
     try:
-        data = await fetch_coingecko("/global")
+        cache_key = "global"
+        data = await fetch_coingecko("/global", cache_key=cache_key)
         global_data = data.get('data', {})
         
         return {
