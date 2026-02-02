@@ -166,13 +166,14 @@ async def get_market_prices(
 ):
     """Get current prices for multiple cryptocurrencies"""
     try:
+        cache_key = f"prices_{ids}_{vs_currency}"
         data = await fetch_coingecko("/coins/markets", {
             "vs_currency": vs_currency,
             "ids": ids,
             "order": "market_cap_desc",
             "sparkline": "false",
             "price_change_percentage": "24h"
-        })
+        }, cache_key=cache_key)
         
         coins = []
         for coin in data:
