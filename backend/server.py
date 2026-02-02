@@ -103,22 +103,54 @@ class NewsItem(BaseModel):
 
 # ==================== COINGECKO API ====================
 
-async def fetch_coingecko(endpoint: str, params: dict = None):
-    """Fetch data from CoinGecko API"""
+def get_cache(key: str):
+    """Get value from cache if not expired"""
+    if key in cache:
+        data, timestamp = cache[key]
+        if (datetime.now(timezone.utc) - timestamp).total_seconds() < CACHE_DURATION:
+            return data
+    return None
+
+def set_cache(key: str, data: Any):
+    """Set value in cache"""
+    cache[key] = (data, datetime.now(timezone.utc))
+
+async def fetch_coingecko(endpoint: str, params: dict = None, cache_key: str = None):
+    """Fetch data from CoinGecko API with caching"""
+    # Check cache first
+    if cache_key:
+        cached = get_cache(cache_key)
+        if cached:
+            logger.info(f"Cache hit for {cache_key}")
+            return cached
+    
     async with httpx.AsyncClient() as client:
         try:
+            await asyncio.sleep(0.5)  # Rate limit protection
             response = await client.get(
                 f"{COINGECKO_BASE}{endpoint}",
                 params=params,
                 timeout=30.0
             )
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            
+            # Store in cache
+            if cache_key:
+                set_cache(cache_key, data)
+            
+            return data
         except httpx.HTTPStatusError as e:
             logger.error(f"CoinGecko API error: {e}")
+            # Return cached data if available, even if expired
+            if cache_key and cache_key in cache:
+                logger.info(f"Using stale cache for {cache_key}")
+                return cache[cache_key][0]
             raise HTTPException(status_code=e.response.status_code, detail=str(e))
         except Exception as e:
             logger.error(f"CoinGecko fetch error: {e}")
+            if cache_key and cache_key in cache:
+                return cache[cache_key][0]
             raise HTTPException(status_code=500, detail=str(e))
 
 # ==================== MARKET ENDPOINTS ====================
