@@ -40,6 +40,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Simple in-memory cache
+cache = {}
+CACHE_DURATION = 30  # seconds
+
 # ==================== MODELS ====================
 
 class PriceData(BaseModel):
