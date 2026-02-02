@@ -266,13 +266,14 @@ async def get_trending_coins():
 async def get_coin_details(coin_id: str):
     """Get detailed information about a specific coin"""
     try:
+        cache_key = f"coin_{coin_id}"
         data = await fetch_coingecko(f"/coins/{coin_id}", {
             "localization": "false",
             "tickers": "false",
             "market_data": "true",
             "community_data": "false",
             "developer_data": "false"
-        })
+        }, cache_key=cache_key)
         
         market_data = data.get('market_data', {})
         
