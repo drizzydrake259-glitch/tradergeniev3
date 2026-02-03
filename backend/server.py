@@ -42,9 +42,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Simple in-memory cache
+# Simple in-memory cache with longer duration for rate limiting
 cache = {}
-CACHE_DURATION = 30  # seconds
+CACHE_DURATION = 60  # seconds - increased to reduce API calls
+SCANNER_CACHE_DURATION = 120  # 2 minutes for scanner data
+last_api_call = None
+API_COOLDOWN = 2  # seconds between API calls
 
 # ==================== MODELS ====================
 
