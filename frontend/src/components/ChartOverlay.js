@@ -145,77 +145,134 @@ const SMCOverlay = ({ indicators, chartWidth, chartHeight, priceData }) => {
     return offset + (percent * paddedHeight);
   };
 
-  // PDH/PDL - Previous Day High/Low (using 24h high/low as proxy)
-  if (indicators.pdhl && high24h && low24h) {
+  // US Market Hours - vertical lines (9:30 AM - 4:00 PM EST)
+  // These appear as time-based markers on the chart
+  if (indicators.pdhl) {
+    // PDH/PDL with vertical session markers
     const pdhY = priceToY(high24h);
     const pdlY = priceToY(low24h);
     
+    // Previous Day High line
     overlays.push(
       <div key="pdh" className="absolute w-full border-t-2 border-dashed border-yellow-500/70 pointer-events-none"
         style={{ top: pdhY, left: 0 }}>
         <div className="absolute left-2 -top-4 bg-yellow-500/90 text-black text-[9px] font-mono font-bold px-1.5 py-0.5 rounded">
-          PDH ${high24h.toLocaleString()}
+          PDH ${high24h?.toLocaleString()}
         </div>
-      </div>,
+      </div>
+    );
+    
+    // Previous Day Low line  
+    overlays.push(
       <div key="pdl" className="absolute w-full border-t-2 border-dashed border-yellow-500/70 pointer-events-none"
         style={{ top: pdlY, left: 0 }}>
         <div className="absolute left-2 -top-4 bg-yellow-500/90 text-black text-[9px] font-mono font-bold px-1.5 py-0.5 rounded">
-          PDL ${low24h.toLocaleString()}
+          PDL ${low24h?.toLocaleString()}
+        </div>
+      </div>
+    );
+    
+    // US Market Open (9:30 AM EST) - Vertical line
+    overlays.push(
+      <div key="us-open" className="absolute h-full border-l-2 border-dashed border-blue-400/60 pointer-events-none"
+        style={{ left: '15%', top: 0 }}>
+        <div className="absolute top-2 -left-1 transform -rotate-90 origin-left bg-blue-500/80 text-white text-[8px] font-mono px-1 py-0.5 rounded whitespace-nowrap">
+          US OPEN 9:30
+        </div>
+      </div>
+    );
+    
+    // US Market Close (4:00 PM EST) - Vertical line
+    overlays.push(
+      <div key="us-close" className="absolute h-full border-l-2 border-dashed border-red-400/60 pointer-events-none"
+        style={{ left: '85%', top: 0 }}>
+        <div className="absolute top-2 -left-1 transform -rotate-90 origin-left bg-red-500/80 text-white text-[8px] font-mono px-1 py-0.5 rounded whitespace-nowrap">
+          US CLOSE 16:00
         </div>
       </div>
     );
   }
 
-  // Liquidity zones - at equal highs/lows (approximated near high/low)
+  // Liquidity zones - horizontal bands at key levels where stops accumulate
   if (indicators.liquidity) {
-    const liqHighY = priceToY(high24h * 1.002); // Just above high
-    const liqLowY = priceToY(low24h * 0.998); // Just below low
+    // Liquidity above highs (buy stops / short squeeze zone)
+    const liqHighPrice = high24h * 1.005;
+    const liqHighY = priceToY(liqHighPrice);
     
     overlays.push(
-      <div key="liq-high" className="absolute pointer-events-none" style={{ top: liqHighY - 15, left: 0, width: '100%' }}>
-        <div className="h-4 bg-gradient-to-b from-cyan-500/30 to-transparent border-t-2 border-cyan-500">
-          <span className="text-[9px] text-cyan-400 font-mono font-bold ml-2">$$$ LIQUIDITY (EQH) $$$</span>
+      <div key="liq-high" className="absolute pointer-events-none" 
+        style={{ top: Math.max(0, liqHighY - 20), left: 0, width: '100%', height: 25 }}>
+        <div className="h-full bg-gradient-to-b from-cyan-500/40 to-cyan-500/10 border-t-2 border-cyan-400">
+          <div className="flex items-center gap-1 px-2 pt-0.5">
+            <span className="text-[9px] text-cyan-300 font-mono font-bold">$$$ BUY STOPS</span>
+            <span className="text-[8px] text-cyan-400/70">Liquidity pool above highs</span>
+          </div>
         </div>
-      </div>,
-      <div key="liq-low" className="absolute pointer-events-none" style={{ top: liqLowY, left: 0, width: '100%' }}>
-        <div className="h-4 bg-gradient-to-t from-cyan-500/30 to-transparent border-b-2 border-cyan-500">
-          <span className="text-[9px] text-cyan-400 font-mono font-bold ml-2 block mt-0.5">$$$ LIQUIDITY (EQL) $$$</span>
+      </div>
+    );
+    
+    // Liquidity below lows (sell stops / long squeeze zone)
+    const liqLowPrice = low24h * 0.995;
+    const liqLowY = priceToY(liqLowPrice);
+    
+    overlays.push(
+      <div key="liq-low" className="absolute pointer-events-none" 
+        style={{ top: liqLowY, left: 0, width: '100%', height: 25 }}>
+        <div className="h-full bg-gradient-to-t from-cyan-500/40 to-cyan-500/10 border-b-2 border-cyan-400">
+          <div className="flex items-center gap-1 px-2 pt-2">
+            <span className="text-[9px] text-cyan-300 font-mono font-bold">$$$ SELL STOPS</span>
+            <span className="text-[8px] text-cyan-400/70">Liquidity pool below lows</span>
+          </div>
+        </div>
+      </div>
+    );
+    
+    // Mid-range liquidity (equal highs/lows)
+    const midPrice = (high24h + low24h) / 2;
+    const midY = priceToY(midPrice);
+    overlays.push(
+      <div key="liq-mid" className="absolute pointer-events-none"
+        style={{ top: midY - 10, left: '30%', width: '40%', height: 20 }}>
+        <div className="h-full bg-cyan-500/15 border border-cyan-500/40 rounded flex items-center justify-center">
+          <span className="text-[8px] text-cyan-400 font-mono">EQ Level</span>
         </div>
       </div>
     );
   }
 
-  // FVG - Fair Value Gaps (estimated based on price movement)
+  // FVG - Fair Value Gaps (imbalance zones)
   if (indicators.fvg) {
-    // If price moved significantly, there's likely FVGs
     if (Math.abs(change24h) > 2) {
       const fvgDirection = change24h > 0 ? 'bullish' : 'bearish';
-      const fvgMidPrice = current * (1 - (change24h / 200)); // Midpoint of recent move
+      const fvgMidPrice = current * (1 - (change24h / 200));
       const fvgY = priceToY(fvgMidPrice);
-      const fvgHeight = Math.min(Math.abs(change24h) * 2, 30);
+      const fvgHeight = Math.min(Math.abs(change24h) * 2, 35);
       
       overlays.push(
         <div key="fvg-1" className="absolute pointer-events-none"
           style={{ 
             top: fvgY - fvgHeight/2, 
-            left: '25%', 
-            width: '30%', 
+            left: '20%', 
+            width: '35%', 
             height: fvgHeight 
           }}>
-          <div className={`h-full border-l-4 ${fvgDirection === 'bullish' ? 'bg-purple-500/25 border-purple-500' : 'bg-purple-500/25 border-purple-500'}`}>
-            <span className="text-[8px] text-purple-400 font-mono font-bold ml-1">FVG {fvgDirection === 'bullish' ? '↑' : '↓'}</span>
+          <div className={`h-full border-l-4 ${fvgDirection === 'bullish' ? 'bg-purple-500/25 border-purple-400' : 'bg-purple-500/25 border-purple-400'}`}>
+            <div className="flex items-center gap-1 px-1 pt-0.5">
+              <span className="text-[9px] text-purple-300 font-mono font-bold">FVG</span>
+              <span className="text-[8px] text-purple-400/80">{fvgDirection === 'bullish' ? '↑ Bullish imbalance' : '↓ Bearish imbalance'}</span>
+            </div>
           </div>
         </div>
       );
       
-      // Add another FVG zone
+      // Second FVG
       const fvg2Price = current * (1 - (change24h / 400));
       const fvg2Y = priceToY(fvg2Price);
       overlays.push(
         <div key="fvg-2" className="absolute pointer-events-none"
-          style={{ top: fvg2Y - fvgHeight/3, left: '55%', width: '20%', height: fvgHeight * 0.7 }}>
-          <div className="h-full bg-purple-500/20 border-l-4 border-purple-500">
-            <span className="text-[8px] text-purple-400 font-mono font-bold ml-1">FVG</span>
+          style={{ top: fvg2Y - fvgHeight/3, left: '55%', width: '25%', height: fvgHeight * 0.6 }}>
+          <div className="h-full bg-purple-500/20 border-l-4 border-purple-400">
+            <span className="text-[8px] text-purple-300 font-mono font-bold ml-1">FVG</span>
           </div>
         </div>
       );
@@ -229,47 +286,82 @@ const SMCOverlay = ({ indicators, chartWidth, chartHeight, priceData }) => {
     
     overlays.push(
       <div key="breaker" className="absolute pointer-events-none"
-        style={{ top: breakerY - 20, left: '20%', width: '40%', height: 40 }}>
+        style={{ top: breakerY - 20, left: '15%', width: '45%', height: 40 }}>
         <div className="h-full border-2 border-dashed border-orange-500/60 bg-orange-500/10 rounded">
-          <span className="text-[8px] text-orange-400 font-mono font-bold ml-1 mt-0.5 block">BREAKER BLOCK</span>
+          <div className="flex items-center gap-1 px-1 pt-0.5">
+            <span className="text-[9px] text-orange-400 font-mono font-bold">BREAKER</span>
+            <span className="text-[8px] text-orange-400/70">Failed OB - expect reaction</span>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Swing High/Low markers
+  // Swing High/Low markers with structure labels
   if (indicators.swings) {
-    const swingHY = priceToY(high24h * 0.995);
-    const swingLY = priceToY(low24h * 1.005);
-    const swing2Y = priceToY(current);
+    const swingHighY = priceToY(high24h * 0.998);
+    const swingLowY = priceToY(low24h * 1.002);
+    const currentY = priceToY(current);
+    
+    // Swing High markers
+    overlays.push(
+      <div key="swing-hh-1" className="absolute pointer-events-none" style={{ left: '25%', top: swingHighY - 25 }}>
+        <div className="flex flex-col items-center">
+          <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-b-[12px] border-transparent border-b-green-500" />
+          <div className="bg-green-500/90 text-black text-[9px] font-mono font-bold px-1.5 py-0.5 rounded mt-0.5">
+            HH
+          </div>
+          <span className="text-[8px] text-green-400/80 mt-0.5">Higher High</span>
+        </div>
+      </div>
+    );
     
     overlays.push(
-      // Higher High
-      <div key="swing-hh" className="absolute pointer-events-none" style={{ left: '30%', top: swingHY - 10 }}>
+      <div key="swing-hh-2" className="absolute pointer-events-none" style={{ left: '60%', top: swingHighY - 20 }}>
         <div className="flex flex-col items-center">
-          <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-transparent border-b-green-500" />
-          <span className="text-[9px] text-green-400 font-mono font-bold mt-0.5">HH</span>
+          <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-b-[12px] border-transparent border-b-green-500" />
+          <div className="bg-green-500/90 text-black text-[9px] font-mono font-bold px-1.5 py-0.5 rounded mt-0.5">
+            HH
+          </div>
         </div>
-      </div>,
-      // Higher High 2
-      <div key="swing-hh2" className="absolute pointer-events-none" style={{ left: '65%', top: swingHY }}>
+      </div>
+    );
+    
+    // Higher Low marker
+    const hlY = priceToY(low24h * 1.02);
+    overlays.push(
+      <div key="swing-hl" className="absolute pointer-events-none" style={{ left: '45%', top: hlY }}>
         <div className="flex flex-col items-center">
-          <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-transparent border-b-green-500" />
-          <span className="text-[9px] text-green-400 font-mono font-bold mt-0.5">HH</span>
+          <div className="bg-blue-500/90 text-white text-[9px] font-mono font-bold px-1.5 py-0.5 rounded">
+            HL
+          </div>
+          <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[10px] border-transparent border-t-blue-500 mt-0.5" />
+          <span className="text-[8px] text-blue-400/80 mt-0.5">Higher Low</span>
         </div>
-      </div>,
-      // Current price marker
-      <div key="swing-c" className="absolute pointer-events-none" style={{ left: '80%', top: swing2Y - 5 }}>
+      </div>
+    );
+    
+    // Swing Low markers
+    overlays.push(
+      <div key="swing-ll" className="absolute pointer-events-none" style={{ left: '35%', top: swingLowY }}>
         <div className="flex flex-col items-center">
-          <div className={`w-0 h-0 border-l-[5px] border-r-[5px] ${change24h > 0 ? 'border-b-[8px] border-transparent border-b-blue-500' : 'border-t-[8px] border-transparent border-t-blue-500'}`} />
-          <span className="text-[8px] text-blue-400 font-mono font-bold">{change24h > 0 ? 'HL' : 'LH'}</span>
+          <div className="bg-red-500/90 text-white text-[9px] font-mono font-bold px-1.5 py-0.5 rounded">
+            LL
+          </div>
+          <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[12px] border-transparent border-t-red-500 mt-0.5" />
+          <span className="text-[8px] text-red-400/80 mt-0.5">Lower Low</span>
         </div>
-      </div>,
-      // Lower Low
-      <div key="swing-ll" className="absolute pointer-events-none" style={{ left: '45%', top: swingLY }}>
-        <div className="flex flex-col items-center">
-          <span className="text-[9px] text-red-400 font-mono font-bold mb-0.5">LL</span>
-          <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[10px] border-transparent border-t-red-500" />
+      </div>
+    );
+    
+    // Current structure indicator
+    const structureType = change24h > 0 ? 'BULLISH' : 'BEARISH';
+    overlays.push(
+      <div key="structure-label" className="absolute pointer-events-none" style={{ right: 10, top: 10 }}>
+        <div className={`px-2 py-1 rounded ${change24h > 0 ? 'bg-green-500/20 border border-green-500/50' : 'bg-red-500/20 border border-red-500/50'}`}>
+          <span className={`text-[10px] font-mono font-bold ${change24h > 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {structureType} STRUCTURE
+          </span>
         </div>
       </div>
     );
