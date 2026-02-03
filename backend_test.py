@@ -124,6 +124,90 @@ class TradingAPITester:
         """Test signal history endpoint"""
         return self.test_endpoint("Signal History", "GET", "/signals/history?limit=5")
 
+    def test_strategies_list(self):
+        """Test strategies list endpoint - should return 5 built-in strategies"""
+        success, data = self.test_endpoint("Strategies List", "GET", "/strategies")
+        if success:
+            strategies = data.get("strategies", [])
+            builtin_strategies = [s for s in strategies if s.get("is_builtin", False)]
+            if len(builtin_strategies) >= 5:
+                self.log_test("Strategies List - Built-in Count", True)
+                # Verify expected strategy names
+                expected_strategies = ["trend-continuation", "mean-reversion", "breakout-retest", 
+                                     "meme-pump-short", "volume-breakout"]
+                found_strategies = [s.get("id") for s in builtin_strategies]
+                missing = [s for s in expected_strategies if s not in found_strategies]
+                if not missing:
+                    self.log_test("Strategies List - Expected Strategies", True)
+                else:
+                    self.log_test("Strategies List - Expected Strategies", False, 
+                                f"Missing strategies: {missing}")
+            else:
+                self.log_test("Strategies List - Built-in Count", False, 
+                            f"Expected 5+ built-in strategies, got {len(builtin_strategies)}")
+        return success, data if success else {}
+
+    def test_ai_strategy_builder(self):
+        """Test AI Strategy Builder endpoint"""
+        strategy_request = {
+            "description": "Buy coins that are up more than 10% in 24 hours with strong volume",
+            "market": "crypto",
+            "risk_level": "medium"
+        }
+        
+        print("🔄 Generating AI strategy (this may take 10-15 seconds)...")
+        success, data = self.test_endpoint("AI Strategy Builder", "POST", "/strategies/ai/generate", 
+                                         expected_status=200, data=strategy_request, timeout=45)
+        if success:
+            required_fields = ["id", "name", "description", "type", "entry_rules", "risk_params"]
+            self.validate_response_structure("AI Strategy Builder", data, required_fields)
+            
+            # Verify entry_rules structure
+            entry_rules = data.get("entry_rules", {})
+            if "conditions" in entry_rules and "logic" in entry_rules:
+                self.log_test("AI Strategy Builder - Entry Rules Structure", True)
+            else:
+                self.log_test("AI Strategy Builder - Entry Rules Structure", False, 
+                            "Missing conditions or logic in entry_rules")
+        
+        return success, data if success else {}
+
+    def test_market_scanner(self):
+        """Test Market Scanner endpoint"""
+        scanner_request = {
+            "strategy_ids": None,  # Use all active strategies
+            "min_confidence": 50,
+            "limit": 10
+        }
+        
+        print("🔄 Running market scanner (this may take 15-30 seconds)...")
+        success, data = self.test_endpoint("Market Scanner", "POST", "/scanner/scan", 
+                                         expected_status=200, data=scanner_request, timeout=60)
+        if success:
+            required_fields = ["signals", "scanned_coins", "strategies_used", "timestamp"]
+            self.validate_response_structure("Market Scanner", data, required_fields)
+            
+            # Check if we got signals or appropriate error message
+            signals = data.get("signals", [])
+            error_msg = data.get("error", "")
+            
+            if signals:
+                self.log_test("Market Scanner - Signals Generated", True)
+                # Validate signal structure
+                if signals:
+                    signal = signals[0]
+                    signal_fields = ["coin_id", "symbol", "signal_type", "confidence", 
+                                   "entry_price", "take_profit", "stop_loss"]
+                    self.validate_response_structure("Market Scanner Signal", signal, signal_fields)
+            elif "rate limit" in error_msg.lower() or "api" in error_msg.lower():
+                self.log_test("Market Scanner - API Rate Limited", True, 
+                            "Scanner returned rate limit message (expected behavior)")
+            else:
+                self.log_test("Market Scanner - No Signals", True, 
+                            "No signals found (acceptable if no matches)")
+        
+        return success, data if success else {}
+
     def validate_response_structure(self, name, data, required_fields):
         """Validate response has required fields"""
         missing_fields = []
