@@ -696,16 +696,27 @@ async def scan_market(request: ScannerRequest):
         if not active_strategies:
             return {"signals": [], "scanned_coins": 0, "strategies_used": 0}
         
-        # Fetch market data (top 100 coins)
+        # Fetch market data (top 100 coins) with longer cache
         cache_key = "scanner_coins"
-        coins_data = await fetch_coingecko("/coins/markets", {
-            "vs_currency": "usd",
-            "order": "market_cap_desc",
-            "per_page": 100,
-            "page": 1,
-            "sparkline": "false",
-            "price_change_percentage": "1h,24h"
-        }, cache_key=cache_key)
+        try:
+            coins_data = await fetch_coingecko("/coins/markets", {
+                "vs_currency": "usd",
+                "order": "market_cap_desc",
+                "per_page": 100,
+                "page": 1,
+                "sparkline": "false",
+                "price_change_percentage": "1h,24h"
+            }, cache_key=cache_key, cache_duration=SCANNER_CACHE_DURATION)
+        except HTTPException as e:
+            # If API fails, return empty but don't crash
+            logger.warning(f"Scanner API call failed, returning empty results: {e}")
+            return {
+                "signals": [],
+                "scanned_coins": 0,
+                "strategies_used": len(active_strategies),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "error": "API rate limited - try again in a minute"
+            }
         
         signals = []
         
