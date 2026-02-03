@@ -660,7 +660,9 @@ Respond ONLY with valid JSON in this exact format:
         # Save to database
         await db.strategies.insert_one(strategy_doc)
         
-        return strategy_doc
+        # Return the strategy without MongoDB _id
+        return_doc = {k: v for k, v in strategy_doc.items() if k != '_id'}
+        return return_doc
         
     except json.JSONDecodeError as e:
         logger.error(f"JSON parse error: {e}")
