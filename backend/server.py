@@ -32,6 +32,9 @@ api_router = APIRouter(prefix="/api")
 # CoinGecko Base URL
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
 
+# Coinglass API for derivatives data
+COINGLASS_BASE = "https://open-api.coinglass.com/public/v2"
+
 # Emergent LLM Key
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
 
