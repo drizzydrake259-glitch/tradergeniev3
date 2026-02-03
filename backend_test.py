@@ -221,7 +221,7 @@ class TradingAPITester:
 
     def run_comprehensive_tests(self):
         """Run all API tests"""
-        print("🚀 Starting AI Trading Assistant API Tests")
+        print("🚀 Starting TraderGenie Backend API Tests")
         print(f"📡 Testing against: {self.base_url}")
         print("=" * 60)
 
@@ -230,6 +230,20 @@ class TradingAPITester:
         if not success:
             print("❌ Cannot connect to API. Stopping tests.")
             return False
+
+        # Test strategy endpoints (Priority: HIGH)
+        print("\n⚡ Testing Strategy Endpoints...")
+        
+        success, strategies_data = self.test_strategies_list()
+        if success:
+            self.validate_response_structure("Strategies List", strategies_data, 
+                                           ["strategies", "count"])
+
+        success, ai_strategy_data = self.test_ai_strategy_builder()
+        
+        # Test scanner endpoint (Priority: HIGH)
+        print("\n🔍 Testing Scanner Endpoints...")
+        success, scanner_data = self.test_market_scanner()
 
         # Test market data endpoints
         print("\n📊 Testing Market Data Endpoints...")
@@ -268,7 +282,7 @@ class TradingAPITester:
         if success:
             self.validate_response_structure("News", news_data, ["news", "timestamp"])
 
-        # Test AI signal endpoints
+        # Test AI signal endpoints (Priority: HIGH)
         print("\n🤖 Testing AI Signal Endpoints...")
         
         success, signal_data = self.test_signal_generation()
