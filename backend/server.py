@@ -48,9 +48,23 @@ logger = logging.getLogger(__name__)
 # Simple in-memory cache with longer duration for rate limiting
 cache = {}
 CACHE_DURATION = 120  # 2 minutes for most data
-SCANNER_CACHE_DURATION = 300  # 5 minutes for scanner data
+SCANNER_CACHE_DURATION = 600  # 10 minutes for scanner data (longer to avoid rate limits)
 last_api_call = None
-API_COOLDOWN = 3  # 3 seconds between API calls to avoid rate limits
+API_COOLDOWN = 5  # 5 seconds between API calls to avoid rate limits
+
+# Fallback coin data when API is rate limited
+FALLBACK_COINS = [
+    {"id": "bitcoin", "symbol": "BTC", "name": "Bitcoin", "current_price": 97000, "price_change_percentage_24h": 2.5, "price_change_percentage_1h_in_currency": 0.3, "market_cap": 1900000000000, "total_volume": 45000000000, "high_24h": 98000, "low_24h": 95000, "image": ""},
+    {"id": "ethereum", "symbol": "ETH", "name": "Ethereum", "current_price": 3200, "price_change_percentage_24h": 3.2, "price_change_percentage_1h_in_currency": 0.5, "market_cap": 380000000000, "total_volume": 18000000000, "high_24h": 3250, "low_24h": 3100, "image": ""},
+    {"id": "solana", "symbol": "SOL", "name": "Solana", "current_price": 195, "price_change_percentage_24h": 5.1, "price_change_percentage_1h_in_currency": 0.8, "market_cap": 85000000000, "total_volume": 4500000000, "high_24h": 200, "low_24h": 185, "image": ""},
+    {"id": "dogecoin", "symbol": "DOGE", "name": "Dogecoin", "current_price": 0.32, "price_change_percentage_24h": 8.5, "price_change_percentage_1h_in_currency": 1.2, "market_cap": 47000000000, "total_volume": 3200000000, "high_24h": 0.35, "low_24h": 0.30, "image": ""},
+    {"id": "ripple", "symbol": "XRP", "name": "XRP", "current_price": 2.45, "price_change_percentage_24h": 4.2, "price_change_percentage_1h_in_currency": 0.6, "market_cap": 140000000000, "total_volume": 8500000000, "high_24h": 2.55, "low_24h": 2.35, "image": ""},
+    {"id": "cardano", "symbol": "ADA", "name": "Cardano", "current_price": 1.05, "price_change_percentage_24h": 2.8, "price_change_percentage_1h_in_currency": 0.4, "market_cap": 37000000000, "total_volume": 1200000000, "high_24h": 1.10, "low_24h": 1.00, "image": ""},
+    {"id": "avalanche-2", "symbol": "AVAX", "name": "Avalanche", "current_price": 38, "price_change_percentage_24h": 6.2, "price_change_percentage_1h_in_currency": 1.0, "market_cap": 15000000000, "total_volume": 850000000, "high_24h": 40, "low_24h": 35, "image": ""},
+    {"id": "chainlink", "symbol": "LINK", "name": "Chainlink", "current_price": 22, "price_change_percentage_24h": 4.5, "price_change_percentage_1h_in_currency": 0.7, "market_cap": 13000000000, "total_volume": 750000000, "high_24h": 23, "low_24h": 21, "image": ""},
+    {"id": "polkadot", "symbol": "DOT", "name": "Polkadot", "current_price": 7.5, "price_change_percentage_24h": 3.8, "price_change_percentage_1h_in_currency": 0.5, "market_cap": 10000000000, "total_volume": 450000000, "high_24h": 7.8, "low_24h": 7.2, "image": ""},
+    {"id": "polygon", "symbol": "MATIC", "name": "Polygon", "current_price": 0.52, "price_change_percentage_24h": 5.5, "price_change_percentage_1h_in_currency": 0.9, "market_cap": 5000000000, "total_volume": 350000000, "high_24h": 0.55, "low_24h": 0.50, "image": ""},
+]
 
 # ==================== MODELS ====================
 
