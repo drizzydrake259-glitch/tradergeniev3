@@ -1,11 +1,29 @@
 import React, { useMemo } from 'react';
 import { Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 
-const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading }) => {
-  // Create unique key to force remount when coin/timeframe changes
+const INDICATOR_STUDIES = {
+  'rsi': 'RSI@tv-basicstudies',
+  'macd': 'MACD@tv-basicstudies',
+  'ema': 'MASimple@tv-basicstudies',
+  'bb': 'BB@tv-basicstudies',
+  'volume': 'Volume@tv-basicstudies',
+  'vwap': 'VWAP@tv-basicstudies',
+  'stoch': 'Stochastic@tv-basicstudies',
+  'atr': 'ATR@tv-basicstudies',
+};
+
+const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading, activeIndicators = [] }) => {
+  // Map indicator IDs to TradingView studies
+  const studies = useMemo(() => {
+    return activeIndicators
+      .map(id => INDICATOR_STUDIES[id])
+      .filter(Boolean);
+  }, [activeIndicators]);
+
+  // Create unique key to force remount when coin/timeframe/indicators change
   const widgetKey = useMemo(() => 
-    `${selectedCoin.symbol}-${timeframe}-${Date.now()}`,
-    [selectedCoin.symbol, timeframe]
+    `${selectedCoin.symbol}-${timeframe}-${studies.join('-')}-${Date.now()}`,
+    [selectedCoin.symbol, timeframe, studies]
   );
 
   const priceChange = coinData?.price_change_percentage_24h || 0;
@@ -91,7 +109,8 @@ const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading }) => {
           <TradingViewWidget 
             key={widgetKey}
             symbol={selectedCoin.symbol} 
-            interval={timeframe} 
+            interval={timeframe}
+            studies={studies}
           />
         )}
       </div>
@@ -100,7 +119,7 @@ const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading }) => {
 };
 
 // Separate component for the widget to isolate DOM manipulation
-const TradingViewWidget = ({ symbol, interval }) => {
+const TradingViewWidget = ({ symbol, interval, studies = [] }) => {
   const widgetHtml = useMemo(() => {
     const config = {
       autosize: true,
@@ -117,13 +136,9 @@ const TradingViewWidget = ({ symbol, interval }) => {
       hide_legend: false,
       save_image: false,
       calendar: false,
-      hide_volume: false,
+      hide_volume: true, // Hide default volume, user can add via indicators
       support_host: "https://www.tradingview.com",
-      studies: [
-        "MASimple@tv-basicstudies", 
-        "RSI@tv-basicstudies",
-        "MACD@tv-basicstudies"
-      ],
+      studies: studies, // Dynamic studies based on user selection
       show_popup_button: true,
       popup_width: "1000",
       popup_height: "650"
@@ -150,7 +165,7 @@ const TradingViewWidget = ({ symbol, interval }) => {
         </body>
       </html>
     `;
-  }, [symbol, interval]);
+  }, [symbol, interval, studies]);
 
   return (
     <iframe
