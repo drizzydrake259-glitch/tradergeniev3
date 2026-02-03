@@ -5,11 +5,11 @@ import { Button } from './ui/button';
 import { 
   TrendingUp, 
   TrendingDown, 
-  Globe, 
   BarChart3,
   Newspaper,
   Activity,
-  DollarSign
+  DollarSign,
+  Percent
 } from 'lucide-react';
 
 const MarketIntelligence = ({ intelligence, news, isLoading }) => {
@@ -34,11 +34,13 @@ const MarketIntelligence = ({ intelligence, news, isLoading }) => {
     }
   };
 
-  // Only show BTC funding rate
-  const btcFunding = intelligence?.funding_rates?.BTC || 0;
-  const btcOI = intelligence?.open_interest?.BTC || 0;
+  // Get derivatives data
+  const derivatives = intelligence?.derivatives || {};
+  const btcFundingRate = derivatives.btc_rate_pct || 0;
+  const btcOIChange1h = derivatives.btc_oi_change_1h || 0;
+  const btcOIChange24h = derivatives.btc_oi_change_24h || 0;
   
-  // Calculate estimated 1h volume (roughly 1/24 of 24h)
+  // Calculate volume display
   const volume24h = intelligence?.global?.total_volume_24h || 0;
   const volume1h = volume24h / 24;
   const displayVolume = volumeTimeframe === '1h' ? volume1h : volume24h;
@@ -96,20 +98,25 @@ const MarketIntelligence = ({ intelligence, news, isLoading }) => {
             <div className="flex items-center gap-2">
               <DollarSign className="w-3 h-3 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">BTC Funding:</span>
-              <span className={`font-mono text-xs ${btcFunding >= 0 ? 'text-[#00E599]' : 'text-[#FF3B30]'}`}>
-                {(btcFunding * 100).toFixed(3)}%
+              <span className={`font-mono text-xs ${btcFundingRate >= 0 ? 'text-[#00E599]' : 'text-[#FF3B30]'}`}>
+                {btcFundingRate >= 0 ? '+' : ''}{btcFundingRate.toFixed(4)}%
               </span>
             </div>
 
             <div className="h-4 w-px bg-border/50" />
 
-            {/* BTC Open Interest */}
+            {/* BTC Open Interest % Change */}
             <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4 text-muted-foreground" />
+              <Percent className="w-3 h-3 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">BTC OI:</span>
-              <span className="font-mono text-sm text-foreground">
-                {formatNumber(btcOI)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`font-mono text-xs ${btcOIChange1h >= 0 ? 'text-[#00E599]' : 'text-[#FF3B30]'}`}>
+                  1h: {btcOIChange1h >= 0 ? '+' : ''}{btcOIChange1h.toFixed(2)}%
+                </span>
+                <span className={`font-mono text-xs ${btcOIChange24h >= 0 ? 'text-[#00E599]' : 'text-[#FF3B30]'}`}>
+                  24h: {btcOIChange24h >= 0 ? '+' : ''}{btcOIChange24h.toFixed(2)}%
+                </span>
+              </div>
             </div>
 
             {/* BTC Price & Change */}
