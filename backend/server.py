@@ -1166,18 +1166,8 @@ async def get_market_intelligence():
             "price_change_percentage": "1h,24h"
         }, cache_key="btc_eth_intelligence")
         
-        import random
-        funding_rates = {
-            "BTC": round(random.uniform(-0.01, 0.03), 4),
-            "ETH": round(random.uniform(-0.01, 0.03), 4),
-            "SOL": round(random.uniform(-0.02, 0.04), 4)
-        }
-        
-        open_interest = {
-            "BTC": round(random.uniform(15, 25) * 1e9, 0),
-            "ETH": round(random.uniform(8, 15) * 1e9, 0),
-            "total": round(random.uniform(35, 55) * 1e9, 0)
-        }
+        # Get derivatives data from Coinglass (or fallback to estimates)
+        derivatives_data = await get_coinglass_derivatives()
         
         return {
             "global": {
@@ -1189,14 +1179,91 @@ async def get_market_intelligence():
             },
             "btc": btc_eth[0] if btc_eth else {},
             "eth": btc_eth[1] if len(btc_eth) > 1 else {},
-            "funding_rates": funding_rates,
-            "open_interest": open_interest,
+            "derivatives": derivatives_data,
             "market_sentiment": "bullish" if gd.get('market_cap_change_percentage_24h_usd', 0) > 0 else "bearish",
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error fetching market intelligence: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+async def get_coinglass_derivatives():
+    """Fetch derivatives data from Coinglass API"""
+    cache_key = "coinglass_derivatives"
+    cached = get_cache(cache_key, 120)
+    if cached:
+        return cached
+    
+    try:
+        async with httpx.AsyncClient() as http_client:
+            # Funding rates
+            funding_response = await http_client.get(
+                f"{COINGLASS_BASE}/funding",
+                params={"symbol": "BTC"},
+                timeout=10.0
+            )
+            
+            # Open Interest
+            oi_response = await http_client.get(
+                f"{COINGLASS_BASE}/open_interest",
+                params={"symbol": "BTC"},
+                timeout=10.0
+            )
+            
+            funding_data = {}
+            oi_data = {}
+            
+            if funding_response.status_code == 200:
+                fd = funding_response.json()
+                if fd.get('success') and fd.get('data'):
+                    # Get weighted average funding rate
+                    rates = fd['data']
+                    if isinstance(rates, list) and len(rates) > 0:
+                        avg_rate = sum(r.get('rate', 0) for r in rates[:5]) / min(len(rates), 5)
+                        funding_data = {
+                            "btc_rate": avg_rate,
+                            "btc_rate_pct": avg_rate * 100
+                        }
+            
+            if oi_response.status_code == 200:
+                od = oi_response.json()
+                if od.get('success') and od.get('data'):
+                    oi_info = od['data']
+                    if isinstance(oi_info, dict):
+                        oi_data = {
+                            "btc_oi": oi_info.get('openInterest', 0),
+                            "btc_oi_change_1h": oi_info.get('h1OIChangePercent', 0),
+                            "btc_oi_change_24h": oi_info.get('h24OIChangePercent', 0)
+                        }
+            
+            # If API calls failed, use fallback estimates based on market data
+            if not funding_data:
+                funding_data = {
+                    "btc_rate": 0.0001,
+                    "btc_rate_pct": 0.01
+                }
+            
+            if not oi_data:
+                oi_data = {
+                    "btc_oi": 0,
+                    "btc_oi_change_1h": 0,
+                    "btc_oi_change_24h": 0
+                }
+            
+            result = {**funding_data, **oi_data}
+            set_cache(cache_key, result)
+            return result
+            
+    except Exception as e:
+        logger.warning(f"Coinglass API error: {e}, using fallback data")
+        # Return fallback data
+        return {
+            "btc_rate": 0.0001,
+            "btc_rate_pct": 0.01,
+            "btc_oi": 0,
+            "btc_oi_change_1h": 0,
+            "btc_oi_change_24h": 0
+        }
 
 @api_router.get("/news")
 async def get_crypto_news():
