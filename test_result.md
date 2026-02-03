@@ -235,15 +235,11 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Strategy API - List strategies"
-    - "AI Strategy Builder API"
-    - "Market Scanner API"
-    - "AI Signal Generation"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -251,3 +247,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "TraderGenie MVP implemented with strategy engine, AI builder, market scanner, and resizable UI. Ready for backend testing."
+  - agent: "testing"
+    message: "✅ BACKEND TESTING COMPLETE: All core TraderGenie APIs tested successfully. Fixed MongoDB ObjectId serialization issue in AI strategy builder. Strategy API (5 built-in strategies), AI Strategy Builder, Market Scanner, and AI Signal Generation all working correctly. Market data APIs experiencing expected CoinGecko rate limiting but handle gracefully. Core trading functionality fully operational."
