@@ -1,17 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Switch } from './ui/switch';
-import { Sparkles, ChevronDown, Search } from 'lucide-react';
+import { Sparkles, ChevronDown, Search, Plus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from './ui/dropdown-menu';
 import { ScrollArea } from './ui/scroll-area';
 import { Input } from './ui/input';
-import { useState } from 'react';
+
+const AVAILABLE_INDICATORS = [
+  { id: 'rsi', name: 'RSI', study: 'RSI@tv-basicstudies' },
+  { id: 'macd', name: 'MACD', study: 'MACD@tv-basicstudies' },
+  { id: 'ema', name: 'EMA (20)', study: 'MASimple@tv-basicstudies' },
+  { id: 'bb', name: 'Bollinger Bands', study: 'BB@tv-basicstudies' },
+  { id: 'volume', name: 'Volume', study: 'Volume@tv-basicstudies' },
+  { id: 'vwap', name: 'VWAP', study: 'VWAP@tv-basicstudies' },
+  { id: 'stoch', name: 'Stochastic', study: 'Stochastic@tv-basicstudies' },
+  { id: 'atr', name: 'ATR', study: 'ATR@tv-basicstudies' },
+];
 
 const AssetSelector = ({
   coins,
@@ -20,20 +31,12 @@ const AssetSelector = ({
   timeframes,
   selectedTimeframe,
   onSelectTimeframe,
-  indicators,
-  onToggleIndicator,
   onGenerateSignal,
-  isGeneratingSignal
+  isGeneratingSignal,
+  activeIndicators,
+  onToggleIndicator
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const indicatorLabels = {
-    fvg: 'FVG',
-    breakerBlocks: 'Breakers',
-    liquidityZones: 'Liquidity',
-    swingHighLow: 'Swings',
-    pdhPdl: 'PDH/PDL'
-  };
 
   const filteredCoins = coins.filter(coin => 
     coin.symbol?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -64,7 +67,6 @@ const AssetSelector = ({
           className="w-72 bg-popover border-border p-2"
           data-testid="asset-dropdown-content"
         >
-          {/* Search */}
           <div className="relative mb-2">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -145,27 +147,49 @@ const AssetSelector = ({
       {/* Divider */}
       <div className="h-6 w-px bg-border/50 hidden md:block" />
 
-      {/* Indicator Toggles - Compact */}
-      <div className="hidden xl:flex items-center gap-3 flex-wrap">
-        {Object.entries(indicators).map(([key, value]) => (
-          <div 
-            key={key} 
-            className="flex items-center gap-1.5"
-            data-testid={`indicator-toggle-${key}`}
+      {/* Indicators Dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="outline" 
+            className="h-9 px-3 gap-2 bg-background border-border hover:bg-secondary"
           >
-            <Switch
-              checked={value}
-              onCheckedChange={() => onToggleIndicator(key)}
-              className="scale-75 data-[state=checked]:bg-primary"
-            />
-            <span className={`text-[10px] font-medium transition-colors ${
-              value ? 'text-primary' : 'text-muted-foreground'
-            }`}>
-              {indicatorLabels[key]}
-            </span>
-          </div>
-        ))}
-      </div>
+            <Plus className="w-4 h-4" />
+            <span className="text-sm">Indicators</span>
+            {activeIndicators.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] rounded font-mono">
+                {activeIndicators.length}
+              </span>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-48 bg-popover border-border">
+          <DropdownMenuLabel className="text-xs text-muted-foreground">
+            Add to Chart
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {AVAILABLE_INDICATORS.map((indicator) => {
+            const isActive = activeIndicators.includes(indicator.id);
+            return (
+              <DropdownMenuItem
+                key={indicator.id}
+                onClick={() => onToggleIndicator(indicator.id)}
+                className={`cursor-pointer ${isActive ? 'bg-primary/10 text-primary' : ''}`}
+              >
+                <span className={`w-2 h-2 rounded-full mr-2 ${isActive ? 'bg-primary' : 'bg-muted'}`} />
+                {indicator.name}
+              </DropdownMenuItem>
+            );
+          })}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => onToggleIndicator('clear-all')}
+            className="text-muted-foreground text-xs"
+          >
+            Clear All
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Spacer */}
       <div className="flex-1" />
@@ -184,4 +208,5 @@ const AssetSelector = ({
   );
 };
 
+export { AVAILABLE_INDICATORS };
 export default AssetSelector;
