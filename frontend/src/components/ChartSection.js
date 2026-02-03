@@ -29,7 +29,11 @@ const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading, activeIndi
     
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+    const interval = setInterval(updateDimensions, 1000); // Update periodically
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+      clearInterval(interval);
+    };
   }, []);
 
   // Map standard indicator IDs to TradingView studies
@@ -59,14 +63,26 @@ const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading, activeIndi
     return names;
   }, [smcIndicators]);
 
+  // Price data for SMC overlays
+  const priceData = useMemo(() => {
+    if (!coinData) return null;
+    return {
+      current: coinData.current_price || 0,
+      high24h: coinData.high_24h || 0,
+      low24h: coinData.low_24h || 0,
+      change24h: coinData.price_change_percentage_24h || 0,
+      volume: coinData.total_volume || 0,
+    };
+  }, [coinData]);
+
   return (
     <div className="h-full rounded-xl border border-border/40 bg-card overflow-hidden relative" ref={chartContainerRef}>
-      {/* Chart Header Overlay */}
-      <div className="absolute top-0 left-0 right-24 z-20 p-3 bg-gradient-to-b from-card via-card/80 to-transparent pointer-events-none">
-        <div className="flex items-center gap-4 pointer-events-auto flex-wrap">
+      {/* Chart Header - Fixed and clickable */}
+      <div className="absolute top-0 left-0 right-0 z-30 px-3 py-2 bg-gradient-to-b from-card via-card/95 to-transparent">
+        <div className="flex items-center gap-4 flex-wrap">
           <div className="min-w-0">
-            <h2 className="font-heading text-lg font-bold text-foreground truncate">{selectedCoin.symbol}/USDT</h2>
-            <p className="text-[10px] text-muted-foreground truncate">{selectedCoin.name}</p>
+            <h2 className="font-heading text-lg font-bold text-foreground">{selectedCoin.symbol}/USDT</h2>
+            <p className="text-[10px] text-muted-foreground">{selectedCoin.name}</p>
           </div>
           
           {coinData && (
@@ -86,16 +102,23 @@ const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading, activeIndi
                 </p>
               </div>
               
-              <div className="hidden lg:block">
-                <p className="text-[9px] text-muted-foreground">High</p>
+              <div className="hidden md:block">
+                <p className="text-[9px] text-muted-foreground">24h High</p>
                 <p className="font-mono text-xs text-foreground">
                   ${coinData.high_24h?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                 </p>
               </div>
-              <div className="hidden lg:block">
-                <p className="text-[9px] text-muted-foreground">Low</p>
+              <div className="hidden md:block">
+                <p className="text-[9px] text-muted-foreground">24h Low</p>
                 <p className="font-mono text-xs text-foreground">
                   ${coinData.low_24h?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </p>
+              </div>
+              
+              <div className="hidden lg:block">
+                <p className="text-[9px] text-muted-foreground">Volume</p>
+                <p className="font-mono text-xs text-foreground">
+                  ${(coinData.total_volume / 1e9).toFixed(2)}B
                 </p>
               </div>
             </>
@@ -119,7 +142,7 @@ const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading, activeIndi
       </div>
 
       {/* TradingView Widget */}
-      <div className="h-full w-full">
+      <div className="h-full w-full pt-14">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -134,13 +157,16 @@ const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading, activeIndi
         )}
       </div>
       
-      {/* Chart Overlay for SMC & Drawing */}
-      <ChartOverlay
-        smcIndicators={smcIndicators}
-        isDrawingMode={isDrawingMode}
-        onToggleDrawing={() => setIsDrawingMode(!isDrawingMode)}
-        chartDimensions={chartDimensions}
-      />
+      {/* Chart Overlay for SMC & Drawing - positioned below header */}
+      <div className="absolute top-14 left-0 right-0 bottom-0">
+        <ChartOverlay
+          smcIndicators={smcIndicators}
+          isDrawingMode={isDrawingMode}
+          onToggleDrawing={() => setIsDrawingMode(!isDrawingMode)}
+          chartDimensions={{ ...chartDimensions, height: chartDimensions.height - 56 }}
+          priceData={priceData}
+        />
+      </div>
     </div>
   );
 };
