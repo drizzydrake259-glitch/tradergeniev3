@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Card } from './ui/card';
 import {
   Dialog,
   DialogContent,
@@ -87,140 +86,126 @@ const StrategyPanel = ({ strategies, onCreateAIStrategy, onRunScanner, isScannin
 
   return (
     <TooltipProvider>
-      <div className="h-full rounded-xl border border-border/40 bg-card flex flex-col overflow-hidden" data-testid="strategy-panel">
-        {/* Header - Compact */}
-        <div className="p-2 border-b border-border/40 flex-shrink-0">
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Layers className="w-4 h-4 text-primary flex-shrink-0" />
-              <h3 className="font-heading text-sm font-bold text-foreground truncate">Strategies</h3>
+      <div className="h-full rounded-xl border border-border/40 bg-card flex flex-col overflow-hidden min-w-0">
+        {/* Header */}
+        <div className="p-1.5 border-b border-border/40 flex-shrink-0">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1 min-w-0">
+              <Layers className="w-3 h-3 text-primary flex-shrink-0" />
+              <span className="font-heading text-xs font-bold text-foreground truncate">Strategies</span>
             </div>
-            <Button variant="ghost" size="icon" onClick={onRefresh} className="h-6 w-6 flex-shrink-0">
-              <RefreshCw className="h-3 w-3" />
+            <Button variant="ghost" size="icon" onClick={onRefresh} className="h-5 w-5 flex-shrink-0">
+              <RefreshCw className="h-2.5 w-2.5" />
             </Button>
           </div>
           
-          {/* Action Buttons - Stack vertically when narrow */}
-          <div className="flex flex-col gap-1">
+          {/* Buttons stacked */}
+          <div className="space-y-1">
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full h-7 text-[10px]">
-                  <Sparkles className="w-3 h-3 mr-1 flex-shrink-0" />
+                <Button variant="outline" size="sm" className="w-full h-6 text-[9px] px-1">
+                  <Sparkles className="w-2.5 h-2.5 mr-0.5" />
                   AI Builder
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-card border-border max-w-lg">
                 <DialogHeader>
-                  <DialogTitle className="font-heading">AI Strategy Builder</DialogTitle>
+                  <DialogTitle>AI Strategy Builder</DialogTitle>
                   <DialogDescription className="text-sm">
-                    Describe your strategy in plain English. AI (GPT-4o) will convert it to rules.
+                    Describe your strategy in plain English.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <Textarea
-                    placeholder="Example: Short meme coins that pumped 25% in the last hour with declining volume..."
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    className="min-h-32 bg-background border-border"
-                  />
-                </div>
+                <Textarea
+                  placeholder="Short meme coins that pumped 25% with declining volume..."
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  className="min-h-32 bg-background border-border"
+                />
                 <DialogFooter>
-                  <Button onClick={handleCreateStrategy} disabled={!aiPrompt.trim() || isCreating} className="bg-primary">
-                    {isCreating ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Creating...</> : <><Sparkles className="w-4 h-4 mr-2" /> Generate</>}
+                  <Button onClick={handleCreateStrategy} disabled={!aiPrompt.trim() || isCreating}>
+                    {isCreating ? 'Creating...' : 'Generate'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
             
             <Button 
-              variant="default" 
               size="sm" 
               onClick={handleRunScanner}
               disabled={isScanning || activeStrategies.length === 0}
-              className="w-full h-7 text-[10px] bg-primary text-primary-foreground"
+              className="w-full h-6 text-[9px] px-1 bg-primary text-primary-foreground"
             >
-              {isScanning ? <><RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Scanning...</> : <><Play className="w-3 h-3 mr-1" /> Scan Market</>}
+              {isScanning ? <RefreshCw className="w-2.5 h-2.5 mr-0.5 animate-spin" /> : <Play className="w-2.5 h-2.5 mr-0.5" />}
+              {isScanning ? 'Scanning' : 'Scan'}
             </Button>
           </div>
         </div>
 
-        {/* Strategy List - Responsive cards */}
+        {/* Strategy List */}
         <ScrollArea className="flex-1 min-h-0">
-          <div className="p-1.5 space-y-1">
-            {strategies.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Layers className="w-8 h-8 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">No strategies</p>
-              </div>
-            ) : (
-              strategies.map((strategy) => {
-                const Icon = getStrategyIcon(strategy.type);
-                const color = getStrategyColor(strategy.type);
-                const isSelected = selectedStrategies.includes(strategy.id);
-                
-                return (
-                  <Tooltip key={strategy.id}>
-                    <TooltipTrigger asChild>
-                      <Card
-                        className={`p-2 cursor-pointer transition-all hover:bg-accent/50 ${
-                          isSelected ? 'ring-2 ring-primary bg-primary/5' : ''
-                        } ${strategy.is_active ? '' : 'opacity-40'}`}
-                        onClick={() => toggleStrategySelection(strategy.id)}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: color + '20' }}
-                          >
-                            <Icon className="w-3 h-3" style={{ color }} />
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1">
-                              <p className="font-mono font-semibold text-[11px] text-foreground truncate">
-                                {strategy.name}
-                              </p>
-                              {isSelected && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <Badge 
-                                variant="secondary" 
-                                className="text-[8px] px-1 py-0 capitalize h-4"
-                                style={{ backgroundColor: color + '15', color }}
-                              >
-                                {strategy.type.replace('_', ' ')}
-                              </Badge>
-                              {strategy.is_builtin && (
-                                <span className="text-[8px] text-muted-foreground">Built-in</span>
-                              )}
-                            </div>
-                          </div>
+          <div className="p-1 space-y-0.5">
+            {strategies.map((strategy) => {
+              const Icon = getStrategyIcon(strategy.type);
+              const color = getStrategyColor(strategy.type);
+              const isSelected = selectedStrategies.includes(strategy.id);
+              
+              return (
+                <Tooltip key={strategy.id}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={`p-1.5 rounded cursor-pointer transition-all border ${
+                        isSelected 
+                          ? 'border-primary bg-primary/10' 
+                          : 'border-transparent hover:bg-accent/30'
+                      } ${strategy.is_active ? '' : 'opacity-40'}`}
+                      onClick={() => toggleStrategySelection(strategy.id)}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <div 
+                          className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: color + '20' }}
+                        >
+                          <Icon className="w-2.5 h-2.5" style={{ color }} />
                         </div>
-                      </Card>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-[250px]">
-                      <p className="font-semibold text-sm">{strategy.name}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{strategy.description}</p>
-                      <div className="flex gap-2 mt-2 text-[10px]">
-                        <span>Risk: {strategy.risk_params?.risk_percent || 2}%</span>
-                        <span>R:R {strategy.risk_params?.rr_ratio || 2}:1</span>
-                        <span>{strategy.timeframes?.join('/')}</span>
+                        
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono text-[10px] font-semibold text-foreground truncate block">
+                              {strategy.name}
+                            </span>
+                            {isSelected && (
+                              <span className="w-1 h-1 rounded-full bg-primary flex-shrink-0" />
+                            )}
+                          </div>
+                          <span 
+                            className="text-[8px] capitalize block truncate"
+                            style={{ color }}
+                          >
+                            {strategy.type.replace('_', ' ')}
+                          </span>
+                        </div>
                       </div>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })
-            )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-[280px] z-50">
+                    <p className="font-semibold">{strategy.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{strategy.description}</p>
+                    <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
+                      <span>Risk: {strategy.risk_params?.risk_percent || 2}%</span>
+                      <span>R:R {strategy.risk_params?.rr_ratio || 2}:1</span>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </div>
         </ScrollArea>
 
         {/* Footer */}
-        <div className="p-2 border-t border-border/40 flex-shrink-0">
-          <div className="flex items-center justify-between text-[9px] text-muted-foreground">
+        <div className="px-1.5 py-1 border-t border-border/40 flex-shrink-0">
+          <div className="flex items-center justify-between text-[8px] text-muted-foreground">
             <span>{activeStrategies.length} active</span>
-            <span>{selectedStrategies.length} selected</span>
+            <span>{selectedStrategies.length} sel</span>
           </div>
         </div>
       </div>
