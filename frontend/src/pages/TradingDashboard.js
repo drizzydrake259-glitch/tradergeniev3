@@ -282,16 +282,17 @@ const TradingDashboard = () => {
   };
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header currentCoin={currentCoinData} intelligence={intelligence} />
 
-      <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="flex-1 min-h-0">
-          <ResizablePanelGroup direction="horizontal" className="h-full">
+      <main className="flex-1 flex flex-col overflow-auto">
+        {/* Main Content Area */}
+        <div className="flex-1 min-h-[600px]">
+          <ResizablePanelGroup direction="horizontal" className="h-full min-h-[600px]">
             {showStrategyPanel && !isChartFullscreen && (
               <>
-                <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
-                  <div className="h-full p-2">
+                <ResizablePanel defaultSize={18} minSize={15} maxSize={28}>
+                  <div className="h-full p-2 overflow-auto">
                     <StrategyPanel
                       strategies={strategies}
                       onCreateAIStrategy={createAIStrategy}
@@ -307,23 +308,36 @@ const TradingDashboard = () => {
             
             <ResizablePanel defaultSize={showStrategyPanel && showSignalsPanel ? 57 : 75}>
               <div className="h-full p-2 flex flex-col">
-                <AssetSelector
-                  coins={topCoins.length > 0 ? topCoins : DEFAULT_COINS}
-                  selectedCoin={selectedCoin}
-                  onSelectCoin={handleCoinSelect}
-                  timeframes={TIMEFRAMES}
-                  selectedTimeframe={timeframe}
-                  onSelectTimeframe={handleTimeframeChange}
-                  onGenerateSignal={generateSignal}
-                  isGeneratingSignal={isGeneratingSignal}
-                  activeIndicators={activeIndicators}
-                  onToggleIndicator={handleToggleIndicator}
-                  smcIndicators={smcIndicators}
-                  onToggleSMC={handleToggleSMC}
-                />
-
-                <div className="flex-1 min-h-0 mt-2 relative">
-                  <div className="absolute top-14 right-2 z-40 flex items-center gap-1">
+                {/* Top Controls Row - Asset Selector + R:R Box Controls */}
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex-1">
+                    <AssetSelector
+                      coins={topCoins.length > 0 ? topCoins : DEFAULT_COINS}
+                      selectedCoin={selectedCoin}
+                      onSelectCoin={handleCoinSelect}
+                      timeframes={TIMEFRAMES}
+                      selectedTimeframe={timeframe}
+                      onSelectTimeframe={handleTimeframeChange}
+                      onGenerateSignal={generateSignal}
+                      isGeneratingSignal={isGeneratingSignal}
+                      activeIndicators={activeIndicators}
+                      onToggleIndicator={handleToggleIndicator}
+                      smcIndicators={smcIndicators}
+                      onToggleSMC={handleToggleSMC}
+                    />
+                  </div>
+                </div>
+                
+                {/* R:R Box Controls Row - Above Chart */}
+                <div className="flex items-center justify-between mb-2 px-2 py-1.5 rounded-lg border border-border/40 bg-card/50">
+                  <RRBoxControls
+                    isDrawingMode={isDrawingMode}
+                    onToggleDrawing={() => setIsDrawingMode(!isDrawingMode)}
+                    boxCount={rrBoxCount}
+                    onClearAll={() => setRrBoxCount(0)}
+                  />
+                  
+                  <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" onClick={() => setShowStrategyPanel(!showStrategyPanel)} className="h-7 w-7 bg-background/80 backdrop-blur-sm">
                       {showStrategyPanel ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                     </Button>
@@ -334,7 +348,10 @@ const TradingDashboard = () => {
                       {showSignalsPanel ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                     </Button>
                   </div>
-                  
+                </div>
+
+                {/* Chart Area */}
+                <div className="flex-1 min-h-[400px] relative">
                   <ChartSection
                     selectedCoin={selectedCoin}
                     timeframe={timeframe}
@@ -342,9 +359,12 @@ const TradingDashboard = () => {
                     isLoading={isLoading}
                     activeIndicators={activeIndicators}
                     smcIndicators={smcIndicators}
+                    isDrawingMode={isDrawingMode}
+                    onDrawingModeChange={setIsDrawingMode}
                   />
                 </div>
 
+                {/* Mini Chart - NAS100 */}
                 {showMiniCharts && !isChartFullscreen && (
                   <div className="mt-2">
                     <MiniChart symbol="PEPPERSTONE:NAS100" title="US Tech 100 (NAS100)" />
@@ -357,35 +377,21 @@ const TradingDashboard = () => {
               <>
                 <ResizableHandle withHandle className="bg-border/30 hover:bg-primary/50 transition-colors" />
                 <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
-                  <div className="h-full p-2 flex flex-col gap-2">
+                  <div className="h-full p-2 flex flex-col gap-2 overflow-auto">
                     {/* Trade Calculator */}
                     <TradeCalculator 
                       currentPrice={currentCoinData?.current_price} 
                       symbol={selectedCoin.symbol}
                     />
                     
-                    {/* Signals panels in remaining space */}
-                    <div className="flex-1 min-h-0">
-                      <ResizablePanelGroup direction="vertical">
-                        <ResizablePanel defaultSize={50} minSize={30}>
-                          <SignalsPanel
-                            signals={signals}
-                            isLoading={isLoading}
-                            currentCoin={selectedCoin}
-                            title="AI Signals"
-                          />
-                        </ResizablePanel>
-                        
-                        <ResizableHandle withHandle className="bg-border/30 hover:bg-primary/50 transition-colors my-1" />
-                        
-                        <ResizablePanel defaultSize={50} minSize={30}>
-                          <ScannerPanel
-                            signals={scannerSignals}
-                            isLoading={isScanning}
-                            onSelectCoin={handleCoinSelect}
-                          />
-                        </ResizablePanel>
-                      </ResizablePanelGroup>
+                    {/* AI Signals Panel */}
+                    <div className="flex-1 min-h-[200px]">
+                      <SignalsPanel
+                        signals={signals}
+                        isLoading={isLoading}
+                        currentCoin={selectedCoin}
+                        title="AI Signals"
+                      />
                     </div>
                   </div>
                 </ResizablePanel>
@@ -394,6 +400,7 @@ const TradingDashboard = () => {
           </ResizablePanelGroup>
         </div>
 
+        {/* Market Intelligence Bar */}
         {showMarketIntel && !isChartFullscreen && (
           <div className="relative flex-shrink-0">
             <Button variant="ghost" size="icon" onClick={() => setShowMarketIntel(false)} className="absolute -top-3 left-1/2 transform -translate-x-1/2 h-6 w-12 bg-card border border-border/40 rounded-full z-10">
@@ -407,6 +414,19 @@ const TradingDashboard = () => {
           <Button variant="ghost" size="sm" onClick={() => { setShowMarketIntel(true); if (isChartFullscreen) setIsChartFullscreen(false); }} className="fixed bottom-2 left-1/2 transform -translate-x-1/2 h-8 px-4 bg-card border border-border/40 rounded-full z-50">
             <ChevronUp className="h-4 w-4 mr-1" /> Market Intel
           </Button>
+        )}
+
+        {/* Scanner Panel - Below News, Full Width */}
+        {!isChartFullscreen && (
+          <div className="px-4 pb-4">
+            <div className="max-w-full">
+              <ScannerPanel
+                signals={scannerSignals}
+                isLoading={isScanning}
+                onSelectCoin={handleCoinSelect}
+              />
+            </div>
+          </div>
         )}
       </main>
     </div>
