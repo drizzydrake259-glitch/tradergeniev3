@@ -282,13 +282,13 @@ const TradingDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       <Header currentCoin={currentCoinData} intelligence={intelligence} />
 
-      <main className="flex-1 flex flex-col overflow-auto">
-        {/* Main Content Area */}
-        <div className="flex-1 min-h-[600px]">
-          <ResizablePanelGroup direction="horizontal" className="h-full min-h-[600px]">
+      <main className="flex-1 flex flex-col min-h-0 overflow-auto">
+        {/* Main Content Area - takes most of the space */}
+        <div className="flex-1 min-h-0">
+          <ResizablePanelGroup direction="horizontal" className="h-full">
             {showStrategyPanel && !isChartFullscreen && (
               <>
                 <ResizablePanel defaultSize={18} minSize={15} maxSize={28}>
@@ -308,28 +308,24 @@ const TradingDashboard = () => {
             
             <ResizablePanel defaultSize={showStrategyPanel && showSignalsPanel ? 57 : 75}>
               <div className="h-full p-2 flex flex-col">
-                {/* Top Controls Row - Asset Selector + R:R Box Controls */}
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex-1">
-                    <AssetSelector
-                      coins={topCoins.length > 0 ? topCoins : DEFAULT_COINS}
-                      selectedCoin={selectedCoin}
-                      onSelectCoin={handleCoinSelect}
-                      timeframes={TIMEFRAMES}
-                      selectedTimeframe={timeframe}
-                      onSelectTimeframe={handleTimeframeChange}
-                      onGenerateSignal={generateSignal}
-                      isGeneratingSignal={isGeneratingSignal}
-                      activeIndicators={activeIndicators}
-                      onToggleIndicator={handleToggleIndicator}
-                      smcIndicators={smcIndicators}
-                      onToggleSMC={handleToggleSMC}
-                    />
-                  </div>
-                </div>
+                {/* Asset Selector Row */}
+                <AssetSelector
+                  coins={topCoins.length > 0 ? topCoins : DEFAULT_COINS}
+                  selectedCoin={selectedCoin}
+                  onSelectCoin={handleCoinSelect}
+                  timeframes={TIMEFRAMES}
+                  selectedTimeframe={timeframe}
+                  onSelectTimeframe={handleTimeframeChange}
+                  onGenerateSignal={generateSignal}
+                  isGeneratingSignal={isGeneratingSignal}
+                  activeIndicators={activeIndicators}
+                  onToggleIndicator={handleToggleIndicator}
+                  smcIndicators={smcIndicators}
+                  onToggleSMC={handleToggleSMC}
+                />
                 
                 {/* R:R Box Controls Row - Above Chart */}
-                <div className="flex items-center justify-between mb-2 px-2 py-1.5 rounded-lg border border-border/40 bg-card/50">
+                <div className="flex items-center justify-between mt-2 px-2 py-1.5 rounded-lg border border-border/40 bg-card/50">
                   <RRBoxControls
                     isDrawingMode={isDrawingMode}
                     onToggleDrawing={() => setIsDrawingMode(!isDrawingMode)}
@@ -350,8 +346,8 @@ const TradingDashboard = () => {
                   </div>
                 </div>
 
-                {/* Chart Area */}
-                <div className="flex-1 min-h-[400px] relative">
+                {/* Chart Area - fills remaining space */}
+                <div className="flex-1 min-h-0 mt-2 relative">
                   <ChartSection
                     selectedCoin={selectedCoin}
                     timeframe={timeframe}
@@ -366,7 +362,7 @@ const TradingDashboard = () => {
 
                 {/* Mini Chart - NAS100 */}
                 {showMiniCharts && !isChartFullscreen && (
-                  <div className="mt-2">
+                  <div className="mt-2 flex-shrink-0">
                     <MiniChart symbol="PEPPERSTONE:NAS100" title="US Tech 100 (NAS100)" />
                   </div>
                 )}
@@ -385,12 +381,13 @@ const TradingDashboard = () => {
                     />
                     
                     {/* AI Signals Panel */}
-                    <div className="flex-1 min-h-[200px]">
+                    <div className="flex-1 min-h-0">
                       <SignalsPanel
                         signals={signals}
                         isLoading={isLoading}
                         currentCoin={selectedCoin}
                         title="AI Signals"
+                        onRefresh={fetchSignalHistory}
                       />
                     </div>
                   </div>
@@ -416,16 +413,14 @@ const TradingDashboard = () => {
           </Button>
         )}
 
-        {/* Scanner Panel - Below News, Full Width */}
+        {/* Scanner Panel - Below everything, scrollable */}
         {!isChartFullscreen && (
-          <div className="px-4 pb-4">
-            <div className="max-w-full">
-              <ScannerPanel
-                signals={scannerSignals}
-                isLoading={isScanning}
-                onSelectCoin={handleCoinSelect}
-              />
-            </div>
+          <div className="flex-shrink-0 px-4 pb-4">
+            <ScannerPanel
+              signals={scannerSignals}
+              isLoading={isScanning}
+              onSelectCoin={handleCoinSelect}
+            />
           </div>
         )}
       </main>
