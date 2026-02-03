@@ -37,6 +37,51 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
     };
   };
 
+  // Generate confidence explanation based on signal data
+  const getConfidenceReason = (signal) => {
+    const reasons = [];
+    
+    // Check price momentum
+    if (signal.price_change_24h > 5) {
+      reasons.push('Strong 24h momentum');
+    } else if (signal.price_change_24h > 2) {
+      reasons.push('Positive momentum');
+    } else if (signal.price_change_24h < -5) {
+      reasons.push('Oversold bounce potential');
+    }
+    
+    // Check strategy type alignment
+    if (signal.strategy_name) {
+      if (signal.strategy_name.includes('Trend') && signal.price_change_24h > 0) {
+        reasons.push('Trend aligned');
+      }
+      if (signal.strategy_name.includes('Breakout') && signal.price_change_1h > 3) {
+        reasons.push('Breakout confirmed');
+      }
+      if (signal.strategy_name.includes('Volume') && signal.volume_24h > 1000000000) {
+        reasons.push('High volume');
+      }
+    }
+    
+    // Check R:R ratio
+    if (signal.risk_reward >= 2.5) {
+      reasons.push('Excellent R:R');
+    } else if (signal.risk_reward >= 2) {
+      reasons.push('Good R:R');
+    }
+    
+    // Confidence level context
+    if (signal.confidence_score >= 80) {
+      reasons.push('Multiple conditions met');
+    } else if (signal.confidence_score >= 60) {
+      reasons.push('Key conditions met');
+    } else {
+      reasons.push('Partial match');
+    }
+    
+    return reasons.slice(0, 2).join(' • ');
+  };
+
   const formatNumber = (num) => {
     if (!num) return '0';
     if (num >= 1e9) return `$${(num / 1e9).toFixed(1)}B`;
