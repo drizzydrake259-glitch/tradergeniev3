@@ -144,6 +144,7 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
             {signals.map((signal, index) => {
               const config = getSignalConfig(signal.signal_type, signal.confidence);
               const Icon = config.icon;
+              const confidenceReason = getConfidenceReason(signal);
 
               return (
                 <Card
@@ -190,7 +191,7 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
                   </div>
 
                   {/* Confidence & Price */}
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-1">
                     <Badge 
                       variant="outline" 
                       className="font-mono text-[10px] px-1.5"
@@ -202,6 +203,11 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
                       {signal.price_change_24h >= 0 ? '+' : ''}{signal.price_change_24h?.toFixed(1)}%
                     </span>
                   </div>
+
+                  {/* Confidence Explanation */}
+                  <p className="text-[9px] text-muted-foreground mb-2 line-clamp-1" title={confidenceReason}>
+                    {confidenceReason}
+                  </p>
 
                   {/* Price Info */}
                   <div className="grid grid-cols-2 gap-1 text-[10px]">
