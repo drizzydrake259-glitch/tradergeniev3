@@ -114,11 +114,14 @@ backend:
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "GET /api/strategies returns 5 built-in strategies"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: GET /api/strategies returns all 5 expected built-in strategies (trend-continuation, mean-reversion, breakout-retest, meme-pump-short, volume-breakout). Response structure validated with strategies array and count field."
 
   - task: "AI Strategy Builder API"
     implemented: true
@@ -126,11 +129,14 @@ backend:
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "POST /api/strategies/ai/generate converts plain English to strategy rules"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: POST /api/strategies/ai/generate successfully converts plain English descriptions to structured strategies. Fixed MongoDB ObjectId serialization issue. Generated strategy with proper entry_rules, risk_params, and conditions structure. AI integration working correctly."
 
   - task: "Market Scanner API"
     implemented: true
@@ -138,11 +144,14 @@ backend:
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "POST /api/scanner/scan scans coins against strategies"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: POST /api/scanner/scan working correctly. Returns proper response structure with signals array, scanned_coins count, and strategies_used count. Handles CoinGecko API rate limiting gracefully with appropriate error messages. Scanner logic functional."
 
   - task: "AI Signal Generation"
     implemented: true
@@ -150,23 +159,29 @@ backend:
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "POST /api/signals/generate creates AI-powered trade signals"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: POST /api/signals/generate successfully generates AI-powered trade signals with proper entry_price, take_profit, stop_loss, confidence levels, and detailed analysis. LLM integration working correctly with GPT-4o model."
 
   - task: "Market Data APIs"
     implemented: true
-    working: true
+    working: false
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "GET /api/market/* endpoints for prices, top coins, trending"
+      - working: false
+        agent: "testing"
+        comment: "⚠️ TESTED: Market data endpoints experiencing CoinGecko API rate limiting (429 errors). This is expected behavior for free tier API usage. Core functionality works when API calls succeed. /api/market/trending works correctly. Rate limiting is properly handled with caching and fallback mechanisms."
 
 frontend:
   - task: "Resizable Panel Layout"
