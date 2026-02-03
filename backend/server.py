@@ -796,9 +796,17 @@ async def scan_market(request: ScannerRequest):
         signals.sort(key=lambda x: x['confidence_score'], reverse=True)
         signals = signals[:request.limit]
         
-        # Store signals in database
+        # Store signals in database (without ObjectId)
         if signals:
-            await db.scanner_signals.insert_many(signals)
+            # Make a copy of signals without ObjectId for storage
+            signals_for_db = []
+            for s in signals:
+                signal_copy = s.copy()
+                signals_for_db.append(signal_copy)
+            try:
+                await db.scanner_signals.insert_many(signals_for_db)
+            except Exception as e:
+                logger.warning(f"Failed to store signals: {e}")
         
         return {
             "signals": signals,
