@@ -453,7 +453,7 @@ const TradingDashboard = () => {
                 {/* Mini Charts Row */}
                 {showMiniCharts && !isChartFullscreen && (
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    <MiniChart symbol="NASDAQ:NDX" title="US Tech 100" />
+                    <MiniChart symbol="NASDAQ:QQQ" title="US Tech 100" />
                     <MiniChart symbol="TVC:DXY" title="DXY (Dollar Index)" />
                   </div>
                 )}
