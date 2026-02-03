@@ -305,17 +305,25 @@ def set_cache(key: str, data: Any):
     """Set value in cache"""
     cache[key] = (data, datetime.now(timezone.utc))
 
-async def fetch_coingecko(endpoint: str, params: dict = None, cache_key: str = None):
-    """Fetch data from CoinGecko API with caching"""
+async def fetch_coingecko(endpoint: str, params: dict = None, cache_key: str = None, cache_duration: int = CACHE_DURATION):
+    """Fetch data from CoinGecko API with caching and rate limiting"""
+    global last_api_call
+    
     if cache_key:
-        cached = get_cache(cache_key)
+        cached = get_cache(cache_key, cache_duration)
         if cached:
             logger.info(f"Cache hit for {cache_key}")
             return cached
     
+    # Rate limiting
+    if last_api_call:
+        elapsed = (datetime.now(timezone.utc) - last_api_call).total_seconds()
+        if elapsed < API_COOLDOWN:
+            await asyncio.sleep(API_COOLDOWN - elapsed)
+    
     async with httpx.AsyncClient() as http_client:
         try:
-            await asyncio.sleep(0.5)
+            last_api_call = datetime.now(timezone.utc)
             response = await http_client.get(
                 f"{COINGECKO_BASE}{endpoint}",
                 params=params,
