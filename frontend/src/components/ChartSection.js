@@ -16,67 +16,73 @@ const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading }) => {
       className="h-full rounded-xl border border-border/40 bg-card overflow-hidden relative"
       data-testid="chart-section"
     >
-      {/* Chart Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-card via-card/90 to-transparent pointer-events-none">
-        <div className="flex items-center justify-between pointer-events-auto">
-          <div className="flex items-center gap-4">
-            <div>
-              <h2 className="font-heading text-2xl font-bold text-foreground">
-                {selectedCoin.symbol}/USDT
-              </h2>
-              <p className="text-sm text-muted-foreground">{selectedCoin.name}</p>
-            </div>
-            
-            {coinData && (
-              <div className="flex items-center gap-6 ml-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Price</p>
-                  <p className="font-mono text-xl font-bold text-foreground">
-                    ${coinData.current_price?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">24h Change</p>
-                  <p className={`font-mono text-lg font-semibold flex items-center gap-1 ${isPositive ? 'text-[#00E599]' : 'text-[#FF3B30]'}`}>
-                    {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                    {priceChange.toFixed(2)}%
-                  </p>
-                </div>
-                <div className="hidden lg:block">
-                  <p className="text-xs text-muted-foreground">24h High</p>
-                  <p className="font-mono text-sm text-foreground">
-                    ${coinData.high_24h?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className="hidden lg:block">
-                  <p className="text-xs text-muted-foreground">24h Low</p>
-                  <p className="font-mono text-sm text-foreground">
-                    ${coinData.low_24h?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className="hidden xl:block">
-                  <p className="text-xs text-muted-foreground">Volume</p>
-                  <p className="font-mono text-sm text-foreground">
-                    ${(coinData.total_volume / 1e9).toFixed(2)}B
-                  </p>
-                </div>
-              </div>
-            )}
+      {/* Chart Header Overlay */}
+      <div className="absolute top-0 left-0 right-16 z-10 p-3 bg-gradient-to-b from-card via-card/80 to-transparent pointer-events-none">
+        <div className="flex items-center gap-6 pointer-events-auto">
+          {/* Coin Info */}
+          <div>
+            <h2 className="font-heading text-xl font-bold text-foreground">
+              {selectedCoin.symbol}/USDT
+            </h2>
+            <p className="text-xs text-muted-foreground">{selectedCoin.name}</p>
           </div>
+          
+          {coinData && (
+            <>
+              {/* Price */}
+              <div>
+                <p className="text-[10px] text-muted-foreground">Price</p>
+                <p className="font-mono text-lg font-bold text-foreground">
+                  ${coinData.current_price?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </p>
+              </div>
+              
+              {/* 24h Change */}
+              <div>
+                <p className="text-[10px] text-muted-foreground">24h Change</p>
+                <p className={`font-mono text-sm font-semibold flex items-center gap-1 ${isPositive ? 'text-[#00E599]' : 'text-[#FF3B30]'}`}>
+                  {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {priceChange.toFixed(2)}%
+                </p>
+              </div>
+              
+              {/* High/Low */}
+              <div className="hidden md:block">
+                <p className="text-[10px] text-muted-foreground">24h High</p>
+                <p className="font-mono text-xs text-foreground">
+                  ${coinData.high_24h?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div className="hidden md:block">
+                <p className="text-[10px] text-muted-foreground">24h Low</p>
+                <p className="font-mono text-xs text-foreground">
+                  ${coinData.low_24h?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </p>
+              </div>
+              
+              {/* Volume */}
+              <div className="hidden lg:block">
+                <p className="text-[10px] text-muted-foreground">24h Volume</p>
+                <p className="font-mono text-xs text-foreground">
+                  ${(coinData.total_volume / 1e9).toFixed(2)}B
+                </p>
+              </div>
+            </>
+          )}
 
           {/* Live indicator */}
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-3 w-3">
+          <div className="flex items-center gap-1.5 ml-auto">
+            <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
             </span>
-            <span className="text-xs font-mono text-muted-foreground">LIVE</span>
+            <span className="text-[10px] font-mono text-muted-foreground">LIVE</span>
           </div>
         </div>
       </div>
 
-      {/* TradingView Widget using iframe */}
-      <div className="h-full w-full pt-20">
+      {/* TradingView Widget - Full Size */}
+      <div className="h-full w-full">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -113,7 +119,14 @@ const TradingViewWidget = ({ symbol, interval }) => {
       calendar: false,
       hide_volume: false,
       support_host: "https://www.tradingview.com",
-      studies: ["MASimple@tv-basicstudies", "RSI@tv-basicstudies"]
+      studies: [
+        "MASimple@tv-basicstudies", 
+        "RSI@tv-basicstudies",
+        "MACD@tv-basicstudies"
+      ],
+      show_popup_button: true,
+      popup_width: "1000",
+      popup_height: "650"
     };
 
     return `
@@ -121,13 +134,15 @@ const TradingViewWidget = ({ symbol, interval }) => {
       <html>
         <head>
           <style>
-            body { margin: 0; padding: 0; background: #050505; }
-            .tradingview-widget-container { height: 100vh; width: 100%; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body { height: 100%; width: 100%; background: #050505; overflow: hidden; }
+            .tradingview-widget-container { height: 100%; width: 100%; }
+            .tradingview-widget-container__widget { height: 100% !important; width: 100% !important; }
           </style>
         </head>
         <body>
           <div class="tradingview-widget-container">
-            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+            <div class="tradingview-widget-container__widget"></div>
             <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
               ${JSON.stringify(config)}
             </script>
@@ -147,7 +162,7 @@ const TradingViewWidget = ({ symbol, interval }) => {
         border: 'none',
         backgroundColor: '#050505'
       }}
-      sandbox="allow-scripts allow-same-origin"
+      sandbox="allow-scripts allow-same-origin allow-popups"
     />
   );
 };
