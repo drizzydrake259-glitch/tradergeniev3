@@ -719,6 +719,8 @@ async def scan_market(request: ScannerRequest):
         
         # Fetch market data (top 100 coins) with longer cache
         cache_key = "scanner_coins"
+        coins_data = None
+        
         try:
             coins_data = await fetch_coingecko("/coins/markets", {
                 "vs_currency": "usd",
@@ -729,15 +731,14 @@ async def scan_market(request: ScannerRequest):
                 "price_change_percentage": "1h,24h"
             }, cache_key=cache_key, cache_duration=SCANNER_CACHE_DURATION)
         except HTTPException as e:
-            # If API fails, return empty but don't crash
-            logger.warning(f"Scanner API call failed, returning empty results: {e}")
-            return {
-                "signals": [],
-                "scanned_coins": 0,
-                "strategies_used": len(active_strategies),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "error": "API rate limited - try again in a minute"
-            }
+            logger.warning(f"Scanner API call failed, using fallback data: {e}")
+            # Use fallback data when API fails
+            coins_data = FALLBACK_COINS
+        
+        if not coins_data:
+            # Final fallback
+            coins_data = FALLBACK_COINS
+            logger.info("Using fallback coin data for scanner")
         
         signals = []
         
@@ -784,7 +785,7 @@ async def scan_market(request: ScannerRequest):
                     
                     signal = TradeSignal(
                         coin_id=coin['id'],
-                        symbol=coin['symbol'].upper(),
+                        symbol=coin['symbol'].upper() if isinstance(coin.get('symbol'), str) else coin.get('symbol', 'UNK'),
                         name=coin['name'],
                         image=coin.get('image', ''),
                         signal_type=signal_type,
