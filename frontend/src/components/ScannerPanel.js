@@ -81,7 +81,7 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
             {signals.length} signals found
           </Badge>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">Click "Scan Market" in the Strategies panel to analyze top 100 coins</p>
+        <p className="text-xs text-muted-foreground mt-1">Click &quot;Scan Market&quot; in the Strategies panel to analyze top 100 coins</p>
       </div>
 
       {/* Signals Grid - Horizontal scroll on mobile, grid on desktop */}
@@ -91,7 +91,7 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
             <Radar className="w-12 h-12 text-muted-foreground mb-3" />
             <p className="text-sm text-muted-foreground font-medium">No signals found</p>
             <p className="text-xs text-muted-foreground mt-2 max-w-[300px]">
-              Click "Scan Market" in the Strategies panel to analyze top 100 coins against your active strategies.
+              Click &quot;Scan Market&quot; in the Strategies panel to analyze top 100 coins against your active strategies.
             </p>
           </div>
         ) : (
