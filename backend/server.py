@@ -1212,12 +1212,26 @@ async def get_coinglass_derivatives():
     if cached:
         return cached
     
+    # If no API key, return fallback immediately
+    if not COINGLASS_API_KEY:
+        logger.info("No Coinglass API key set, using fallback data")
+        return {
+            "btc_rate": 0.0001,
+            "btc_rate_pct": 0.01,
+            "btc_oi": 0,
+            "btc_oi_change_1h": 0,
+            "btc_oi_change_24h": 0
+        }
+    
     try:
         async with httpx.AsyncClient() as http_client:
+            headers = {"coinglassSecret": COINGLASS_API_KEY}
+            
             # Funding rates
             funding_response = await http_client.get(
                 f"{COINGLASS_BASE}/funding",
                 params={"symbol": "BTC"},
+                headers=headers,
                 timeout=10.0
             )
             
@@ -1225,6 +1239,7 @@ async def get_coinglass_derivatives():
             oi_response = await http_client.get(
                 f"{COINGLASS_BASE}/open_interest",
                 params={"symbol": "BTC"},
+                headers=headers,
                 timeout=10.0
             )
             
