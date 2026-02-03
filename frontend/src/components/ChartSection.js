@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 import ChartOverlay from './ChartOverlay';
 
@@ -13,10 +13,20 @@ const INDICATOR_STUDIES = {
   'atr': 'ATR@tv-basicstudies',
 };
 
-const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading, activeIndicators = [], smcIndicators = {} }) => {
-  const [isDrawingMode, setIsDrawingMode] = useState(false);
+const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading, activeIndicators = [], smcIndicators = {}, onDrawingModeChange, isDrawingMode: externalDrawingMode }) => {
+  const [internalDrawingMode, setInternalDrawingMode] = useState(false);
   const [chartDimensions, setChartDimensions] = useState({ width: 800, height: 500 });
   const chartContainerRef = useRef(null);
+  
+  // Use external drawing mode if provided, otherwise use internal
+  const isDrawingMode = externalDrawingMode !== undefined ? externalDrawingMode : internalDrawingMode;
+  const setIsDrawingMode = useCallback((value) => {
+    if (onDrawingModeChange) {
+      onDrawingModeChange(value);
+    } else {
+      setInternalDrawingMode(value);
+    }
+  }, [onDrawingModeChange]);
   
   // Track container size
   useEffect(() => {
