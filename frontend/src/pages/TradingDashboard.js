@@ -41,7 +41,7 @@ const DEFAULT_COINS = [
   { id: 'polygon', symbol: 'MATIC', name: 'Polygon' },
 ];
 
-// Mini chart for UStech100
+// Mini chart component
 const MiniChart = ({ symbol, title }) => {
   const widgetHtml = useMemo(() => {
     const config = {
@@ -63,26 +63,7 @@ const MiniChart = ({ symbol, title }) => {
       support_host: "https://www.tradingview.com"
     };
 
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            html, body { height: 100%; width: 100%; background: #050505; overflow: hidden; }
-            .tradingview-widget-container { height: 100%; width: 100%; }
-          </style>
-        </head>
-        <body>
-          <div class="tradingview-widget-container">
-            <div class="tradingview-widget-container__widget"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-              ${JSON.stringify(config)}
-            </script>
-          </div>
-        </body>
-      </html>
-    `;
+    return `<!DOCTYPE html><html><head><style>*{margin:0;padding:0;box-sizing:border-box}html,body{height:100%;width:100%;background:#050505;overflow:hidden}.tradingview-widget-container{height:100%;width:100%}</style></head><body><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>${JSON.stringify(config)}</script></div></body></html>`;
   }, [symbol]);
 
   return (
@@ -125,12 +106,21 @@ const TradingDashboard = () => {
   const [showMiniCharts, setShowMiniCharts] = useState(true);
   const [isChartFullscreen, setIsChartFullscreen] = useState(false);
   
-  // Chart indicators (none by default)
+  // Chart indicators (standard)
   const [activeIndicators, setActiveIndicators] = useState([]);
+  
+  // SMC indicators
+  const [smcIndicators, setSmcIndicators] = useState({
+    fvg: false,
+    breakers: false,
+    liquidity: false,
+    swings: false,
+    pdhl: false
+  });
 
   const intervalRef = useRef(null);
 
-  // Toggle indicator on chart
+  // Toggle standard indicator
   const handleToggleIndicator = (indicatorId) => {
     if (indicatorId === 'clear-all') {
       setActiveIndicators([]);
@@ -141,6 +131,14 @@ const TradingDashboard = () => {
         ? prev.filter(id => id !== indicatorId)
         : [...prev, indicatorId]
     );
+  };
+
+  // Toggle SMC indicator
+  const handleToggleSMC = (indicatorId) => {
+    setSmcIndicators(prev => ({
+      ...prev,
+      [indicatorId]: !prev[indicatorId]
+    }));
   };
 
   // Fetch market data
@@ -202,7 +200,7 @@ const TradingDashboard = () => {
   // Fetch signal history
   const fetchSignalHistory = useCallback(async () => {
     try {
-      const response = await axios.get(`${API}/signals/history?limit=10`);
+      const response = await axios.get(`${API}/signals/history?limit=20`);
       setSignals(response.data.signals);
     } catch (error) {
       console.error('Error fetching signals:', error);
@@ -230,21 +228,24 @@ const TradingDashboard = () => {
       }
     } catch (error) {
       console.error('Error scanning market:', error);
-      toast.error('Scanner failed - API rate limited. Try again in 1 min.', { id: 'scanner' });
+      toast.error('Scanner failed - try again in 1 min', { id: 'scanner' });
     } finally {
       setIsScanning(false);
     }
   }, []);
 
-  // Generate AI signal
+  // Generate AI signal for CURRENT COIN
   const generateSignal = useCallback(async () => {
     if (!marketData) return;
     
     const coinData = marketData.coins.find(c => c.coin_id === selectedCoin.id);
-    if (!coinData) return;
+    if (!coinData) {
+      toast.error('No data for selected coin');
+      return;
+    }
 
     setIsGeneratingSignal(true);
-    toast.loading('Generating AI signal (GPT-4o)...', { id: 'signal-gen' });
+    toast.loading(`Generating AI signal for ${selectedCoin.symbol}...`, { id: 'signal-gen' });
 
     try {
       const response = await axios.post(`${API}/signals/generate`, {
@@ -260,8 +261,9 @@ const TradingDashboard = () => {
         indicators: {}
       });
 
-      setSignals(prev => [response.data, ...prev.slice(0, 9)]);
-      toast.success('Signal generated!', { id: 'signal-gen' });
+      // Add the new signal to the list
+      setSignals(prev => [response.data, ...prev.slice(0, 19)]);
+      toast.success(`${selectedCoin.symbol} signal generated!`, { id: 'signal-gen' });
     } catch (error) {
       console.error('Error generating signal:', error);
       toast.error('Failed to generate signal', { id: 'signal-gen' });
@@ -272,7 +274,7 @@ const TradingDashboard = () => {
 
   // Create AI strategy
   const createAIStrategy = useCallback(async (description) => {
-    toast.loading('Creating AI strategy (GPT-4o)...', { id: 'ai-strategy' });
+    toast.loading('Creating AI strategy...', { id: 'ai-strategy' });
     
     try {
       const response = await axios.post(`${API}/strategies/ai/generate`, {
@@ -309,25 +311,16 @@ const TradingDashboard = () => {
     fetchAllData();
   }, [fetchMarketData, fetchTopCoins, fetchStrategies, fetchIntelligence, fetchNews, fetchSignalHistory]);
 
-  // Set up polling interval (10 seconds to avoid rate limits)
+  // Polling
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       fetchMarketData();
     }, 10000);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [fetchMarketData]);
 
-  // Refresh intelligence every 30 seconds
   useEffect(() => {
-    const intelligenceInterval = setInterval(() => {
-      fetchIntelligence();
-    }, 30000);
-
+    const intelligenceInterval = setInterval(() => { fetchIntelligence(); }, 30000);
     return () => clearInterval(intelligenceInterval);
   }, [fetchIntelligence]);
 
@@ -344,7 +337,7 @@ const TradingDashboard = () => {
   // Get current coin data
   const currentCoinData = marketData?.coins?.find(c => c.coin_id === selectedCoin.id);
 
-  // Toggle fullscreen chart
+  // Toggle fullscreen
   const toggleFullscreen = () => {
     setIsChartFullscreen(!isChartFullscreen);
     if (!isChartFullscreen) {
@@ -362,21 +355,15 @@ const TradingDashboard = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden" data-testid="trading-dashboard">
-      {/* Header */}
-      <Header 
-        currentCoin={currentCoinData}
-        intelligence={intelligence}
-      />
+      <Header currentCoin={currentCoinData} intelligence={intelligence} />
 
-      {/* Main Content with Resizable Panels */}
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* Top Section: Strategy + Chart + Signals */}
         <div className="flex-1 min-h-0">
           <ResizablePanelGroup direction="horizontal" className="h-full">
             {/* Left: Strategy Panel */}
             {showStrategyPanel && !isChartFullscreen && (
               <>
-                <ResizablePanel defaultSize={18} minSize={12} maxSize={25}>
+                <ResizablePanel defaultSize={16} minSize={10} maxSize={25}>
                   <div className="h-full p-2">
                     <StrategyPanel
                       strategies={strategies}
@@ -392,9 +379,8 @@ const TradingDashboard = () => {
             )}
             
             {/* Center: Chart */}
-            <ResizablePanel defaultSize={showStrategyPanel && showSignalsPanel ? 57 : 75}>
+            <ResizablePanel defaultSize={showStrategyPanel && showSignalsPanel ? 59 : 75}>
               <div className="h-full p-2 flex flex-col">
-                {/* Asset & Timeframe Selection */}
                 <AssetSelector
                   coins={topCoins.length > 0 ? topCoins : DEFAULT_COINS}
                   selectedCoin={selectedCoin}
@@ -406,11 +392,11 @@ const TradingDashboard = () => {
                   isGeneratingSignal={isGeneratingSignal}
                   activeIndicators={activeIndicators}
                   onToggleIndicator={handleToggleIndicator}
+                  smcIndicators={smcIndicators}
+                  onToggleSMC={handleToggleSMC}
                 />
 
-                {/* Chart Section with Controls */}
                 <div className="flex-1 min-h-0 mt-2 relative">
-                  {/* Panel Controls */}
                   <div className="absolute top-2 right-2 z-20 flex items-center gap-1">
                     <Button
                       variant="ghost"
@@ -426,7 +412,7 @@ const TradingDashboard = () => {
                       size="icon"
                       onClick={toggleFullscreen}
                       className="h-7 w-7 bg-background/80 backdrop-blur-sm"
-                      title={isChartFullscreen ? "Exit fullscreen" : "Fullscreen chart"}
+                      title={isChartFullscreen ? "Exit fullscreen" : "Fullscreen"}
                     >
                       {isChartFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                     </Button>
@@ -447,14 +433,14 @@ const TradingDashboard = () => {
                     coinData={currentCoinData}
                     isLoading={isLoading}
                     activeIndicators={activeIndicators}
+                    smcIndicators={smcIndicators}
                   />
                 </div>
 
-                {/* Mini Charts Row */}
+                {/* Mini Chart - Only US Tech 100 */}
                 {showMiniCharts && !isChartFullscreen && (
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <MiniChart symbol="PEPPERSTONE:NAS100" title="US Tech 100" />
-                    <MiniChart symbol="INDEX:DXY" title="DXY (Dollar Index)" />
+                  <div className="mt-2">
+                    <MiniChart symbol="PEPPERSTONE:NAS100" title="US Tech 100 (NAS100)" />
                   </div>
                 )}
               </div>
@@ -467,7 +453,6 @@ const TradingDashboard = () => {
                 <ResizablePanel defaultSize={25} minSize={18} maxSize={35}>
                   <div className="h-full p-2">
                     <ResizablePanelGroup direction="vertical">
-                      {/* AI Signals */}
                       <ResizablePanel defaultSize={50} minSize={30}>
                         <SignalsPanel
                           signals={signals}
@@ -479,7 +464,6 @@ const TradingDashboard = () => {
                       
                       <ResizableHandle withHandle className="bg-border/30 hover:bg-primary/50 transition-colors my-1" />
                       
-                      {/* Scanner Signals */}
                       <ResizablePanel defaultSize={50} minSize={30}>
                         <ScannerPanel
                           signals={scannerSignals}
@@ -495,7 +479,7 @@ const TradingDashboard = () => {
           </ResizablePanelGroup>
         </div>
 
-        {/* Bottom: Market Intelligence (Collapsible) */}
+        {/* Bottom: Market Intelligence */}
         {showMarketIntel && !isChartFullscreen && (
           <div className="relative flex-shrink-0">
             <Button
@@ -503,27 +487,18 @@ const TradingDashboard = () => {
               size="icon"
               onClick={() => setShowMarketIntel(!showMarketIntel)}
               className="absolute -top-3 left-1/2 transform -translate-x-1/2 h-6 w-12 bg-card border border-border/40 rounded-full z-10"
-              title="Hide market intel"
             >
               <ChevronDown className="h-4 w-4" />
             </Button>
-            <MarketIntelligence
-              intelligence={intelligence}
-              news={news}
-              isLoading={isLoading}
-            />
+            <MarketIntelligence intelligence={intelligence} news={news} isLoading={isLoading} />
           </div>
         )}
         
-        {/* Show market intel button when hidden */}
         {(!showMarketIntel || isChartFullscreen) && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              setShowMarketIntel(true);
-              if (isChartFullscreen) setIsChartFullscreen(false);
-            }}
+            onClick={() => { setShowMarketIntel(true); if (isChartFullscreen) setIsChartFullscreen(false); }}
             className="fixed bottom-2 left-1/2 transform -translate-x-1/2 h-8 px-4 bg-card border border-border/40 rounded-full z-50"
           >
             <ChevronUp className="h-4 w-4 mr-1" />
