@@ -531,7 +531,9 @@ async def create_strategy(request: StrategyCreateRequest):
         strategy_doc = strategy.model_dump()
         await db.strategies.insert_one(strategy_doc)
         
-        return strategy_doc
+        # Return the strategy without MongoDB _id
+        return_doc = {k: v for k, v in strategy_doc.items() if k != '_id'}
+        return return_doc
     except Exception as e:
         logger.error(f"Error creating strategy: {e}")
         raise HTTPException(status_code=500, detail=str(e))
