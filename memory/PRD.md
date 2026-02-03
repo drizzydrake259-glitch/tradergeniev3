@@ -26,8 +26,8 @@ TraderGenie is a personal AI trading tool for crypto markets that scans assets, 
 - `ChartOverlay.js` - R:R Box drawing tool and SMC indicators
 - `TradeCalculator.js` - Position sizing and P/L calculator
 - `StrategyPanel.js` - Strategy library with descriptions
-- `ScannerPanel.js` - Market scanner results grid
-- `SignalsPanel.js` - AI-generated signals
+- `ScannerPanel.js` - Market scanner results grid with confidence explanations
+- `SignalsPanel.js` - AI-generated signals with refresh button
 - `MarketIntelligence.js` - Global market data bar
 
 ### Database (MongoDB)
@@ -37,15 +37,24 @@ TraderGenie is a personal AI trading tool for crypto markets that scans assets, 
 
 ## Implemented Features (Feb 3, 2025)
 
-### P0 - Complete
+### Complete
 - [x] R:R Box moved above chart with single-click creation
 - [x] R:R Box duplicate (copy) feature for easy box cloning
 - [x] Market Scanner fixed - uses fallback data when CoinGecko rate limited
-- [x] Page scrollable - scanner below news section
+- [x] Page scrollable - scanner below news section (scroll to reveal)
 - [x] Trade Calculator integrated with live calculations
 - [x] Strategy descriptions visible in white text
-- [x] SMC indicators functional (FVG, Breakers, Liquidity, Swings, PDH/PDL)
+- [x] Full-width horizontal layout preserved (h-screen fit)
+- [x] AI Signals refresh button added
+- [x] Scanner confidence explanations (e.g., "Trend aligned • Excellent R:R")
 - [x] Coinglass API key moved to environment variable
+
+### SMC Indicators - Complete
+- [x] **FVG (Fair Value Gaps)** - Purple zones showing imbalance areas
+- [x] **Breakers** - Orange dashed zones for failed order blocks
+- [x] **Liquidity** - Cyan zones showing buy/sell stop accumulation (EQH/EQL)
+- [x] **Swings** - HH/HL/LH/LL markers with structure labels (Bullish/Bearish)
+- [x] **PDH/PDL** - Yellow dashed lines for previous day high/low + US Market Open/Close vertical lines (9:30 AM / 4:00 PM EST)
 
 ### Known Limitations
 - Scanner uses fallback coin data when CoinGecko API is rate limited (MOCKED)
