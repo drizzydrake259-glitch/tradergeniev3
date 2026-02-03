@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { 
@@ -41,6 +41,68 @@ const DEFAULT_COINS = [
   { id: 'polygon', symbol: 'MATIC', name: 'Polygon' },
 ];
 
+// Mini chart for UStech100
+const MiniChart = ({ symbol, title }) => {
+  const widgetHtml = useMemo(() => {
+    const config = {
+      autosize: true,
+      symbol: symbol,
+      interval: "60",
+      timezone: "Etc/UTC",
+      theme: "dark",
+      style: "1",
+      locale: "en",
+      enable_publishing: false,
+      backgroundColor: "rgba(5, 5, 5, 1)",
+      gridColor: "rgba(39, 39, 42, 0.2)",
+      hide_top_toolbar: true,
+      hide_legend: true,
+      save_image: false,
+      calendar: false,
+      hide_volume: true,
+      support_host: "https://www.tradingview.com"
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body { height: 100%; width: 100%; background: #050505; overflow: hidden; }
+            .tradingview-widget-container { height: 100%; width: 100%; }
+          </style>
+        </head>
+        <body>
+          <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+              ${JSON.stringify(config)}
+            </script>
+          </div>
+        </body>
+      </html>
+    `;
+  }, [symbol]);
+
+  return (
+    <div className="rounded-lg border border-border/40 bg-card overflow-hidden">
+      <div className="px-3 py-1.5 border-b border-border/40 flex items-center justify-between">
+        <span className="text-xs font-mono font-semibold text-foreground">{title}</span>
+        <span className="text-[10px] text-muted-foreground">1H</span>
+      </div>
+      <div className="h-32">
+        <iframe
+          title={title}
+          srcDoc={widgetHtml}
+          style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#050505' }}
+          sandbox="allow-scripts allow-same-origin"
+        />
+      </div>
+    </div>
+  );
+};
+
 const TradingDashboard = () => {
   // State
   const [selectedCoin, setSelectedCoin] = useState(DEFAULT_COINS[0]);
@@ -60,18 +122,26 @@ const TradingDashboard = () => {
   const [showStrategyPanel, setShowStrategyPanel] = useState(true);
   const [showSignalsPanel, setShowSignalsPanel] = useState(true);
   const [showMarketIntel, setShowMarketIntel] = useState(true);
+  const [showMiniCharts, setShowMiniCharts] = useState(true);
   const [isChartFullscreen, setIsChartFullscreen] = useState(false);
   
-  // Indicator toggles
-  const [indicators, setIndicators] = useState({
-    fvg: false,
-    breakerBlocks: false,
-    liquidityZones: true,
-    swingHighLow: true,
-    pdhPdl: false,
-  });
+  // Chart indicators (none by default)
+  const [activeIndicators, setActiveIndicators] = useState([]);
 
   const intervalRef = useRef(null);
+
+  // Toggle indicator on chart
+  const handleToggleIndicator = (indicatorId) => {
+    if (indicatorId === 'clear-all') {
+      setActiveIndicators([]);
+      return;
+    }
+    setActiveIndicators(prev => 
+      prev.includes(indicatorId)
+        ? prev.filter(id => id !== indicatorId)
+        : [...prev, indicatorId]
+    );
+  };
 
   // Fetch market data
   const fetchMarketData = useCallback(async () => {
@@ -142,7 +212,7 @@ const TradingDashboard = () => {
   // Run market scanner
   const runScanner = useCallback(async (strategyIds = null) => {
     setIsScanning(true);
-    toast.loading('Scanning market...', { id: 'scanner' });
+    toast.loading('Scanning 100 coins...', { id: 'scanner' });
     
     try {
       const response = await axios.post(`${API}/scanner/scan`, {
@@ -152,10 +222,15 @@ const TradingDashboard = () => {
       });
       
       setScannerSignals(response.data.signals);
-      toast.success(`Found ${response.data.signals.length} signals from ${response.data.scanned_coins} coins`, { id: 'scanner' });
+      
+      if (response.data.error) {
+        toast.error(response.data.error, { id: 'scanner' });
+      } else {
+        toast.success(`Found ${response.data.signals.length} signals from ${response.data.scanned_coins} coins`, { id: 'scanner' });
+      }
     } catch (error) {
       console.error('Error scanning market:', error);
-      toast.error('Scanner failed', { id: 'scanner' });
+      toast.error('Scanner failed - API rate limited. Try again in 1 min.', { id: 'scanner' });
     } finally {
       setIsScanning(false);
     }
@@ -169,7 +244,7 @@ const TradingDashboard = () => {
     if (!coinData) return;
 
     setIsGeneratingSignal(true);
-    toast.loading('Generating AI signal...', { id: 'signal-gen' });
+    toast.loading('Generating AI signal (GPT-4o)...', { id: 'signal-gen' });
 
     try {
       const response = await axios.post(`${API}/signals/generate`, {
@@ -182,22 +257,22 @@ const TradingDashboard = () => {
         low_24h: coinData.low_24h,
         market_cap: coinData.market_cap,
         timeframe: timeframe,
-        indicators: indicators
+        indicators: {}
       });
 
       setSignals(prev => [response.data, ...prev.slice(0, 9)]);
-      toast.success('Signal generated successfully!', { id: 'signal-gen' });
+      toast.success('Signal generated!', { id: 'signal-gen' });
     } catch (error) {
       console.error('Error generating signal:', error);
       toast.error('Failed to generate signal', { id: 'signal-gen' });
     } finally {
       setIsGeneratingSignal(false);
     }
-  }, [marketData, selectedCoin, timeframe, indicators]);
+  }, [marketData, selectedCoin, timeframe]);
 
   // Create AI strategy
   const createAIStrategy = useCallback(async (description) => {
-    toast.loading('Creating AI strategy...', { id: 'ai-strategy' });
+    toast.loading('Creating AI strategy (GPT-4o)...', { id: 'ai-strategy' });
     
     try {
       const response = await axios.post(`${API}/strategies/ai/generate`, {
@@ -234,7 +309,7 @@ const TradingDashboard = () => {
     fetchAllData();
   }, [fetchMarketData, fetchTopCoins, fetchStrategies, fetchIntelligence, fetchNews, fetchSignalHistory]);
 
-  // Set up polling interval
+  // Set up polling interval (10 seconds to avoid rate limits)
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       fetchMarketData();
@@ -266,11 +341,6 @@ const TradingDashboard = () => {
     setTimeframe(tf);
   };
 
-  // Toggle indicator
-  const toggleIndicator = (key) => {
-    setIndicators(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
   // Get current coin data
   const currentCoinData = marketData?.coins?.find(c => c.coin_id === selectedCoin.id);
 
@@ -281,10 +351,12 @@ const TradingDashboard = () => {
       setShowStrategyPanel(false);
       setShowSignalsPanel(false);
       setShowMarketIntel(false);
+      setShowMiniCharts(false);
     } else {
       setShowStrategyPanel(true);
       setShowSignalsPanel(true);
       setShowMarketIntel(true);
+      setShowMiniCharts(true);
     }
   };
 
@@ -304,7 +376,7 @@ const TradingDashboard = () => {
             {/* Left: Strategy Panel */}
             {showStrategyPanel && !isChartFullscreen && (
               <>
-                <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                <ResizablePanel defaultSize={18} minSize={12} maxSize={25}>
                   <div className="h-full p-2">
                     <StrategyPanel
                       strategies={strategies}
@@ -320,7 +392,7 @@ const TradingDashboard = () => {
             )}
             
             {/* Center: Chart */}
-            <ResizablePanel defaultSize={showStrategyPanel && showSignalsPanel ? 55 : 75}>
+            <ResizablePanel defaultSize={showStrategyPanel && showSignalsPanel ? 57 : 75}>
               <div className="h-full p-2 flex flex-col">
                 {/* Asset & Timeframe Selection */}
                 <AssetSelector
@@ -330,10 +402,10 @@ const TradingDashboard = () => {
                   timeframes={TIMEFRAMES}
                   selectedTimeframe={timeframe}
                   onSelectTimeframe={handleTimeframeChange}
-                  indicators={indicators}
-                  onToggleIndicator={toggleIndicator}
                   onGenerateSignal={generateSignal}
                   isGeneratingSignal={isGeneratingSignal}
+                  activeIndicators={activeIndicators}
+                  onToggleIndicator={handleToggleIndicator}
                 />
 
                 {/* Chart Section with Controls */}
@@ -374,8 +446,17 @@ const TradingDashboard = () => {
                     timeframe={timeframe}
                     coinData={currentCoinData}
                     isLoading={isLoading}
+                    activeIndicators={activeIndicators}
                   />
                 </div>
+
+                {/* Mini Charts Row */}
+                {showMiniCharts && !isChartFullscreen && (
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <MiniChart symbol="NASDAQ:NDX" title="US Tech 100" />
+                    <MiniChart symbol="TVC:DXY" title="DXY (Dollar Index)" />
+                  </div>
+                )}
               </div>
             </ResizablePanel>
 
@@ -383,7 +464,7 @@ const TradingDashboard = () => {
             {showSignalsPanel && !isChartFullscreen && (
               <>
                 <ResizableHandle withHandle className="bg-border/30 hover:bg-primary/50 transition-colors" />
-                <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
+                <ResizablePanel defaultSize={25} minSize={18} maxSize={35}>
                   <div className="h-full p-2">
                     <ResizablePanelGroup direction="vertical">
                       {/* AI Signals */}
@@ -416,7 +497,7 @@ const TradingDashboard = () => {
 
         {/* Bottom: Market Intelligence (Collapsible) */}
         {showMarketIntel && !isChartFullscreen && (
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
