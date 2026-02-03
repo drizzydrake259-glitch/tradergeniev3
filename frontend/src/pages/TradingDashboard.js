@@ -107,8 +107,6 @@ const TradingDashboard = () => {
     swings: false,
     pdhl: false
   });
-  const [isDrawingMode, setIsDrawingMode] = useState(false);
-  const [rrBoxCount, setRrBoxCount] = useState(0);
 
   const intervalRef = useRef(null);
 
