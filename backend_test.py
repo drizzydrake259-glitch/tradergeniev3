@@ -102,18 +102,14 @@ class TradingAPITester:
         signal_data = {
             "coin_id": "bitcoin",
             "symbol": "BTC",
-            "current_price": 95000.0,
+            "current_price": 76000.0,
             "price_change_24h": 2.5,
-            "volume_24h": 25000000000,
-            "high_24h": 96000.0,
-            "low_24h": 93000.0,
-            "market_cap": 1800000000000,
+            "volume_24h": 30000000000,
+            "high_24h": 77000.0,
+            "low_24h": 74000.0,
+            "market_cap": 1500000000000,
             "timeframe": "1h",
-            "indicators": {
-                "fvg": True,
-                "liquidityZones": True,
-                "swingHighLow": False
-            }
+            "indicators": {}
         }
         
         print("🔄 Generating AI signal (this may take 10-15 seconds)...")
