@@ -293,11 +293,11 @@ BUILTIN_STRATEGIES = [
 
 # ==================== HELPER FUNCTIONS ====================
 
-def get_cache(key: str):
+def get_cache(key: str, duration: int = CACHE_DURATION):
     """Get value from cache if not expired"""
     if key in cache:
         data, timestamp = cache[key]
-        if (datetime.now(timezone.utc) - timestamp).total_seconds() < CACHE_DURATION:
+        if (datetime.now(timezone.utc) - timestamp).total_seconds() < duration:
             return data
     return None
 
