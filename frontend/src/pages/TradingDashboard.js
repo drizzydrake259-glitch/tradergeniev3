@@ -14,6 +14,7 @@ import AssetSelector from '../components/AssetSelector';
 import StrategyPanel from '../components/StrategyPanel';
 import ScannerPanel from '../components/ScannerPanel';
 import TradeCalculator from '../components/TradeCalculator';
+import { RRBoxControls } from '../components/ChartOverlay';
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
