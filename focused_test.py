@@ -34,7 +34,7 @@ def test_endpoint(name, method, url, data=None, timeout=30):
         return False, {}
 
 def main():
-    base_url = "https://trade-wizard-69.preview.emergentagent.com"
+    base_url = "https://smartmoney-101.preview.emergentagent.com"
     
     print("🚀 TraderGenie Backend API - Focused Test")
     print("=" * 60)
