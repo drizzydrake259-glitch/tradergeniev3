@@ -25,9 +25,9 @@ const Header = ({ currentCoin, intelligence }) => {
         </div>
         <div>
           <h1 className="font-heading text-xl font-bold tracking-tight text-foreground">
-            TradeGenius
+            TraderGenie
           </h1>
-          <p className="text-xs text-muted-foreground font-mono">AI Trading Assistant</p>
+          <p className="text-xs text-muted-foreground font-mono">AI Strategy Engine</p>
         </div>
       </div>
 
