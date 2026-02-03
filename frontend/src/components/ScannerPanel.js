@@ -53,15 +53,15 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
 
   if (isLoading) {
     return (
-      <div className="h-full rounded-xl border border-border/40 bg-card p-3" data-testid="scanner-panel-loading">
+      <div className="rounded-xl border border-border/40 bg-card p-4" data-testid="scanner-panel-loading">
         <div className="flex items-center gap-2 mb-3">
           <RefreshCw className="w-5 h-5 text-primary animate-spin" />
           <h3 className="font-heading text-base font-bold">Scanning...</h3>
         </div>
         <p className="text-xs text-muted-foreground mb-3">Analyzing 100 coins against active strategies</p>
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-lg" />
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-lg" />
           ))}
         </div>
       </div>
@@ -69,32 +69,33 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
   }
 
   return (
-    <div className="h-full rounded-xl border border-border/40 bg-card flex flex-col" data-testid="scanner-panel">
+    <div className="rounded-xl border border-border/40 bg-card" data-testid="scanner-panel">
       {/* Header */}
-      <div className="p-3 border-b border-border/40 flex-shrink-0">
+      <div className="p-3 border-b border-border/40">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Radar className="w-5 h-5 text-primary" />
-            <h3 className="font-heading text-base font-bold text-foreground">Scanner</h3>
+            <h3 className="font-heading text-base font-bold text-foreground">Market Scanner</h3>
           </div>
           <Badge variant="outline" className="font-mono text-[10px]">
-            {signals.length} found
+            {signals.length} signals found
           </Badge>
         </div>
+        <p className="text-xs text-muted-foreground mt-1">Click "Scan Market" in the Strategies panel to analyze top 100 coins</p>
       </div>
 
-      {/* Signals List */}
-      <ScrollArea className="flex-1 min-h-0">
+      {/* Signals Grid - Horizontal scroll on mobile, grid on desktop */}
+      <div className="p-3">
         {signals.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-4">
-            <Radar className="w-10 h-10 text-muted-foreground mb-3" />
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Radar className="w-12 h-12 text-muted-foreground mb-3" />
             <p className="text-sm text-muted-foreground font-medium">No signals found</p>
-            <p className="text-xs text-muted-foreground mt-2 max-w-[200px]">
-              Click "Scan" to analyze top 100 coins against your active strategies. Results depend on current market conditions.
+            <p className="text-xs text-muted-foreground mt-2 max-w-[300px]">
+              Click "Scan Market" in the Strategies panel to analyze top 100 coins against your active strategies.
             </p>
           </div>
         ) : (
-          <div className="p-2 space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {signals.map((signal, index) => {
               const config = getSignalConfig(signal.signal_type, signal.confidence);
               const Icon = config.icon;
@@ -102,7 +103,7 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
               return (
                 <Card
                   key={signal.id || index}
-                  className="p-2.5 hover:bg-card/80 transition-all cursor-pointer border-l-4"
+                  className="p-3 hover:bg-card/80 transition-all cursor-pointer border-l-4"
                   style={{ borderLeftColor: config.color }}
                   onClick={() => onSelectCoin({ 
                     id: signal.coin_id, 
@@ -115,7 +116,7 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       {signal.image && (
-                        <img src={signal.image} alt={signal.symbol} className="w-5 h-5 rounded-full" />
+                        <img src={signal.image} alt={signal.symbol} className="w-6 h-6 rounded-full" />
                       )}
                       <div>
                         <div className="flex items-center gap-1">
@@ -130,68 +131,48 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-1.5">
-                      <Badge 
-                        className="font-mono text-[10px] px-1.5"
-                        style={{ 
-                          backgroundColor: `${config.color}20`, 
-                          color: config.color,
-                          border: `1px solid ${config.color}40`
-                        }}
-                      >
-                        <Icon className="w-3 h-3 mr-0.5" />
-                        {config.label}
-                      </Badge>
-                      <Badge 
-                        variant="outline" 
-                        className="font-mono text-[9px] px-1"
-                        style={{ borderColor: config.confidenceColor, color: config.confidenceColor }}
-                        title="Confidence Score"
-                      >
-                        {signal.confidence_score}%
-                      </Badge>
-                    </div>
+                    <Badge 
+                      className="font-mono text-[10px] px-1.5"
+                      style={{ 
+                        backgroundColor: `${config.color}20`, 
+                        color: config.color,
+                        border: `1px solid ${config.color}40`
+                      }}
+                    >
+                      <Icon className="w-3 h-3 mr-0.5" />
+                      {config.label}
+                    </Badge>
                   </div>
 
-                  {/* Price Info - Compact */}
-                  <div className="grid grid-cols-4 gap-1 mb-2">
-                    <div className="bg-background/50 rounded p-1 text-center">
-                      <p className="text-[8px] text-muted-foreground">Entry</p>
-                      <p className="font-mono text-[10px] font-semibold text-foreground">
-                        {formatPrice(signal.entry_price)}
-                      </p>
-                    </div>
-                    <div className="bg-background/50 rounded p-1 text-center">
-                      <p className="text-[8px] text-muted-foreground text-[#00E599]">TP</p>
-                      <p className="font-mono text-[10px] font-semibold text-[#00E599]">
-                        {formatPrice(signal.take_profit)}
-                      </p>
-                    </div>
-                    <div className="bg-background/50 rounded p-1 text-center">
-                      <p className="text-[8px] text-muted-foreground text-[#FF3B30]">SL</p>
-                      <p className="font-mono text-[10px] font-semibold text-[#FF3B30]">
-                        {formatPrice(signal.stop_loss)}
-                      </p>
-                    </div>
-                    <div className="bg-background/50 rounded p-1 text-center">
-                      <p className="text-[8px] text-muted-foreground">R:R</p>
-                      <p className="font-mono text-[10px] font-semibold text-primary">
-                        {signal.risk_reward?.toFixed(1) || '-'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 24h Change */}
-                  <div className="flex items-center justify-between text-[9px] text-muted-foreground">
-                    <span className={signal.price_change_24h >= 0 ? 'text-[#00E599]' : 'text-[#FF3B30]'}>
-                      24h: {signal.price_change_24h >= 0 ? '+' : ''}{signal.price_change_24h?.toFixed(1)}%
+                  {/* Confidence & Price */}
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge 
+                      variant="outline" 
+                      className="font-mono text-[10px] px-1.5"
+                      style={{ borderColor: config.confidenceColor, color: config.confidenceColor }}
+                    >
+                      {signal.confidence_score}%
+                    </Badge>
+                    <span className={`font-mono text-xs ${signal.price_change_24h >= 0 ? 'text-[#00E599]' : 'text-[#FF3B30]'}`}>
+                      {signal.price_change_24h >= 0 ? '+' : ''}{signal.price_change_24h?.toFixed(1)}%
                     </span>
-                    <span>Vol: {formatNumber(signal.volume_24h)}</span>
+                  </div>
+
+                  {/* Price Info */}
+                  <div className="grid grid-cols-2 gap-1 text-[10px]">
+                    <div className="bg-background/50 rounded p-1">
+                      <span className="text-muted-foreground">Entry:</span>
+                      <span className="font-mono ml-1">{formatPrice(signal.entry_price)}</span>
+                    </div>
+                    <div className="bg-background/50 rounded p-1">
+                      <span className="text-muted-foreground">R:R:</span>
+                      <span className="font-mono ml-1 text-primary">{signal.risk_reward?.toFixed(1)}</span>
+                    </div>
                   </div>
 
                   {/* Warnings */}
                   {signal.warnings && signal.warnings.length > 0 && (
-                    <div className="mt-1.5 flex items-center gap-1 text-[9px] text-[#FFD60A]">
+                    <div className="mt-2 flex items-center gap-1 text-[9px] text-[#FFD60A]">
                       <AlertTriangle className="w-3 h-3 flex-shrink-0" />
                       <span className="line-clamp-1">{signal.warnings[0]}</span>
                     </div>
@@ -201,7 +182,7 @@ const ScannerPanel = ({ signals, isLoading, onSelectCoin }) => {
             })}
           </div>
         )}
-      </ScrollArea>
+      </div>
     </div>
   );
 };
