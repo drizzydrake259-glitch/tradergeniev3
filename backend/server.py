@@ -38,6 +38,9 @@ COINGLASS_BASE = "https://open-api.coinglass.com/public/v2"
 # Emergent LLM Key
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
 
+# Coinglass API Key (optional - falls back to estimates if not set)
+COINGLASS_API_KEY = os.environ.get('COINGLASS_API_KEY', '')
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
