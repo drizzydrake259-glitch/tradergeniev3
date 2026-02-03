@@ -328,14 +328,7 @@ const TradingDashboard = () => {
                     />
                     
                     {/* R:R Box Controls - Above Chart */}
-                    <div className="flex items-center justify-between mt-2 px-2 py-1.5 rounded-lg border border-border/40 bg-card/50">
-                      <RRBoxControls
-                        isDrawingMode={isDrawingMode}
-                        onToggleDrawing={() => setIsDrawingMode(!isDrawingMode)}
-                        boxCount={rrBoxCount}
-                        onClearAll={() => setRrBoxCount(0)}
-                      />
-                      
+                    <div className="flex items-center justify-end mt-2 px-2 py-1.5">
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" onClick={() => setShowStrategyPanel(!showStrategyPanel)} className="h-7 w-7 bg-background/80 backdrop-blur-sm">
                           {showStrategyPanel ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
