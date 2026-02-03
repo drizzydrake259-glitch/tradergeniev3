@@ -3,6 +3,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { Skeleton } from './ui/skeleton';
+import { Button } from './ui/button';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -11,10 +12,11 @@ import {
   Shield,
   Clock,
   Zap,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 
-const SignalsPanel = ({ signals = [], isLoading, currentCoin, title = "AI Signals" }) => {
+const SignalsPanel = ({ signals = [], isLoading, currentCoin, title = "AI Signals", onRefresh }) => {
   // Filter signals to show only for current coin
   const filteredSignals = currentCoin 
     ? signals.filter(s => 
