@@ -15,9 +15,17 @@ import {
 } from 'lucide-react';
 
 const SignalsPanel = ({ signals = [], isLoading, currentCoin, title = "AI Signals" }) => {
+  // Filter signals to show only for current coin
+  const filteredSignals = currentCoin 
+    ? signals.filter(s => 
+        s.coin_id === currentCoin.id || 
+        s.symbol?.toUpperCase() === currentCoin.symbol?.toUpperCase()
+      )
+    : signals;
+
   if (isLoading) {
     return (
-      <div className="h-full rounded-xl border border-border/40 bg-card p-3" data-testid="signals-panel-loading">
+      <div className="h-full rounded-xl border border-border/40 bg-card p-3">
         <div className="flex items-center gap-2 mb-3">
           <Zap className="w-5 h-5 text-primary" />
           <h3 className="font-heading text-lg font-bold">{title}</h3>
@@ -43,28 +51,33 @@ const SignalsPanel = ({ signals = [], isLoading, currentCoin, title = "AI Signal
   };
 
   return (
-    <div className="h-full rounded-xl border border-border/40 bg-card flex flex-col" data-testid="signals-panel">
+    <div className="h-full rounded-xl border border-border/40 bg-card flex flex-col">
       <div className="p-3 border-b border-border/40 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-primary" />
             <h3 className="font-heading text-base font-bold text-foreground">{title}</h3>
           </div>
-          <Badge variant="outline" className="font-mono text-xs">{signals.length}</Badge>
+          <div className="flex items-center gap-2">
+            {currentCoin && (
+              <Badge variant="outline" className="font-mono text-[10px]">{currentCoin.symbol}</Badge>
+            )}
+            <Badge variant="outline" className="font-mono text-[10px]">{filteredSignals.length}</Badge>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">% = Confidence (conditions matched)</p>
+        <p className="text-[10px] text-muted-foreground mt-1">% = Confidence (conditions matched)</p>
       </div>
 
       <ScrollArea className="flex-1 min-h-0">
-        {signals.length === 0 ? (
+        {filteredSignals.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-center p-3">
             <Zap className="w-8 h-8 text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">No signals yet</p>
-            <p className="text-xs text-muted-foreground mt-1">Click AI Signal to analyze</p>
+            <p className="text-sm text-muted-foreground">No signals for {currentCoin?.symbol || 'this coin'}</p>
+            <p className="text-xs text-muted-foreground mt-1">Click "AI Signal" to analyze</p>
           </div>
         ) : (
           <div className="p-2 space-y-2">
-            {signals.map((signal, idx) => {
+            {filteredSignals.map((signal, idx) => {
               const isBuy = signal.signal_type === 'BUY' || signal.signal_type === 'LONG';
               const isSell = signal.signal_type === 'SELL' || signal.signal_type === 'SHORT';
               const color = isBuy ? '#00E599' : isSell ? '#FF3B30' : '#FFD60A';
