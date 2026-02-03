@@ -65,6 +65,11 @@ const SignalsPanel = ({ signals = [], isLoading, currentCoin, title = "AI Signal
               <Badge variant="outline" className="font-mono text-[10px]">{currentCoin.symbol}</Badge>
             )}
             <Badge variant="outline" className="font-mono text-[10px]">{filteredSignals.length}</Badge>
+            {onRefresh && (
+              <Button variant="ghost" size="icon" onClick={onRefresh} className="h-6 w-6">
+                <RefreshCw className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         </div>
         <p className="text-[10px] text-muted-foreground mt-1">% = Confidence (conditions matched)</p>
