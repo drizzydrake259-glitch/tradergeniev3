@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Loader2, TrendingUp, TrendingDown } from 'lucide-react';
+import ChartOverlay from './ChartOverlay';
 
 const INDICATOR_STUDIES = {
   'rsi': 'RSI@tv-basicstudies',
@@ -12,45 +13,42 @@ const INDICATOR_STUDIES = {
   'atr': 'ATR@tv-basicstudies',
 };
 
-// SMC indicator TradingView studies (community scripts approximations)
-const SMC_STUDIES = {
-  'fvg': 'PUB;5nawr3gCESvSHQfOhrLPretPNe7JWtJT', // Fair Value Gap (ICT)
-  'breakers': 'PUB;vrZQvRXbZCzRFVU8tVWHKMSfYlVKZb6Z', // Order Blocks
-  'liquidity': 'PUB;dKLMDCnkhBdJd8JcvJCwULQNxeKqKcgj', // Liquidity Levels
-  'swings': 'PUB;RwDx1gp9MZqpBMBH7HsExfk6KuNJ5ZuR', // Swing Points
-  'pdhl': 'PUB;b58e8rIxR7UjzGZyj8sJOPj9NdVhXbq7', // Previous Day High/Low
-};
-
 const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading, activeIndicators = [], smcIndicators = {} }) => {
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [chartDimensions, setChartDimensions] = useState({ width: 800, height: 500 });
+  const chartContainerRef = useRef(null);
+  
+  // Track container size
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (chartContainerRef.current) {
+        const rect = chartContainerRef.current.getBoundingClientRect();
+        setChartDimensions({ width: rect.width, height: rect.height });
+      }
+    };
+    
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
   // Map standard indicator IDs to TradingView studies
-  const standardStudies = useMemo(() => {
+  const studies = useMemo(() => {
     return activeIndicators
       .map(id => INDICATOR_STUDIES[id])
       .filter(Boolean);
   }, [activeIndicators]);
 
-  // Get active SMC studies
-  const smcStudies = useMemo(() => {
-    return Object.entries(smcIndicators)
-      .filter(([key, active]) => active && SMC_STUDIES[key])
-      .map(([key]) => SMC_STUDIES[key]);
-  }, [smcIndicators]);
-
-  // Combine all studies
-  const allStudies = useMemo(() => {
-    return [...standardStudies, ...smcStudies];
-  }, [standardStudies, smcStudies]);
-
-  // Create unique key to force remount when settings change
+  // Create unique key
   const widgetKey = useMemo(() => 
-    `${selectedCoin.symbol}-${timeframe}-${allStudies.join('-')}-${Date.now()}`,
-    [selectedCoin.symbol, timeframe, allStudies]
+    `${selectedCoin.symbol}-${timeframe}-${studies.join('-')}-${Date.now()}`,
+    [selectedCoin.symbol, timeframe, studies]
   );
 
   const priceChange = coinData?.price_change_percentage_24h || 0;
   const isPositive = priceChange >= 0;
 
-  // Get active SMC indicator names for display
+  // Get active SMC names
   const activeSMCNames = useMemo(() => {
     const names = [];
     if (smcIndicators.fvg) names.push('FVG');
@@ -62,68 +60,60 @@ const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading, activeIndi
   }, [smcIndicators]);
 
   return (
-    <div className="h-full rounded-xl border border-border/40 bg-card overflow-hidden relative" data-testid="chart-section">
+    <div className="h-full rounded-xl border border-border/40 bg-card overflow-hidden relative" ref={chartContainerRef}>
       {/* Chart Header Overlay */}
-      <div className="absolute top-0 left-0 right-16 z-10 p-3 bg-gradient-to-b from-card via-card/80 to-transparent pointer-events-none">
-        <div className="flex items-center gap-6 pointer-events-auto">
-          <div>
-            <h2 className="font-heading text-xl font-bold text-foreground">{selectedCoin.symbol}/USDT</h2>
-            <p className="text-xs text-muted-foreground">{selectedCoin.name}</p>
+      <div className="absolute top-0 left-0 right-24 z-20 p-3 bg-gradient-to-b from-card via-card/80 to-transparent pointer-events-none">
+        <div className="flex items-center gap-4 pointer-events-auto flex-wrap">
+          <div className="min-w-0">
+            <h2 className="font-heading text-lg font-bold text-foreground truncate">{selectedCoin.symbol}/USDT</h2>
+            <p className="text-[10px] text-muted-foreground truncate">{selectedCoin.name}</p>
           </div>
           
           {coinData && (
             <>
               <div>
-                <p className="text-[10px] text-muted-foreground">Price</p>
-                <p className="font-mono text-lg font-bold text-foreground">
+                <p className="text-[9px] text-muted-foreground">Price</p>
+                <p className="font-mono text-base font-bold text-foreground">
                   ${coinData.current_price?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                 </p>
               </div>
               
               <div>
-                <p className="text-[10px] text-muted-foreground">24h Change</p>
-                <p className={`font-mono text-sm font-semibold flex items-center gap-1 ${isPositive ? 'text-[#00E599]' : 'text-[#FF3B30]'}`}>
+                <p className="text-[9px] text-muted-foreground">24h</p>
+                <p className={`font-mono text-xs font-semibold flex items-center gap-0.5 ${isPositive ? 'text-[#00E599]' : 'text-[#FF3B30]'}`}>
                   {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {priceChange.toFixed(2)}%
                 </p>
               </div>
               
-              <div className="hidden md:block">
-                <p className="text-[10px] text-muted-foreground">24h High</p>
+              <div className="hidden lg:block">
+                <p className="text-[9px] text-muted-foreground">High</p>
                 <p className="font-mono text-xs text-foreground">
                   ${coinData.high_24h?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                 </p>
               </div>
-              <div className="hidden md:block">
-                <p className="text-[10px] text-muted-foreground">24h Low</p>
+              <div className="hidden lg:block">
+                <p className="text-[9px] text-muted-foreground">Low</p>
                 <p className="font-mono text-xs text-foreground">
                   ${coinData.low_24h?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </p>
-              </div>
-              
-              <div className="hidden lg:block">
-                <p className="text-[10px] text-muted-foreground">24h Volume</p>
-                <p className="font-mono text-xs text-foreground">
-                  ${(coinData.total_volume / 1e9).toFixed(2)}B
                 </p>
               </div>
             </>
           )}
 
-          {/* Active SMC indicators display */}
           {activeSMCNames.length > 0 && (
             <div className="hidden xl:block">
-              <p className="text-[10px] text-muted-foreground">Active SMC</p>
-              <p className="font-mono text-xs text-primary">{activeSMCNames.join(', ')}</p>
+              <p className="text-[9px] text-muted-foreground">SMC Active</p>
+              <p className="font-mono text-[10px] text-primary">{activeSMCNames.join(', ')}</p>
             </div>
           )}
 
-          <div className="flex items-center gap-1.5 ml-auto">
-            <span className="relative flex h-2.5 w-2.5">
+          <div className="flex items-center gap-1 ml-auto">
+            <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
             </span>
-            <span className="text-[10px] font-mono text-muted-foreground">LIVE</span>
+            <span className="text-[9px] font-mono text-muted-foreground">LIVE</span>
           </div>
         </div>
       </div>
@@ -139,10 +129,18 @@ const ChartSection = ({ selectedCoin, timeframe, coinData, isLoading, activeIndi
             key={widgetKey}
             symbol={selectedCoin.symbol} 
             interval={timeframe}
-            studies={allStudies}
+            studies={studies}
           />
         )}
       </div>
+      
+      {/* Chart Overlay for SMC & Drawing */}
+      <ChartOverlay
+        smcIndicators={smcIndicators}
+        isDrawingMode={isDrawingMode}
+        onToggleDrawing={() => setIsDrawingMode(!isDrawingMode)}
+        chartDimensions={chartDimensions}
+      />
     </div>
   );
 };
