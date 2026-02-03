@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Button } from './ui/button';
-import { Square, Trash2, RotateCcw } from 'lucide-react';
+import { Square, Trash2, RotateCcw, Copy, Move } from 'lucide-react';
 
-// Drawing box component with R:R ratio
-const DrawingBox = ({ box, onUpdate, onDelete, chartHeight }) => {
+// Drawing box component with R:R ratio - improved dragging
+const DrawingBox = ({ box, onUpdate, onDelete, onDuplicate, chartHeight, isSelected, onSelect }) => {
   const [isDragging, setIsDragging] = useState(null);
+  const [dragStartY, setDragStartY] = useState(null);
+  const [initialBox, setInitialBox] = useState(null);
   const boxRef = useRef(null);
   
   const entryY = box.entryY;
@@ -20,26 +22,37 @@ const DrawingBox = ({ box, onUpdate, onDelete, chartHeight }) => {
   
   const handleMouseDown = (e, type) => {
     e.stopPropagation();
+    e.preventDefault();
+    onSelect(box.id);
     setIsDragging(type);
+    setDragStartY(e.clientY);
+    setInitialBox({ ...box });
   };
   
   const handleMouseMove = useCallback((e) => {
-    if (!isDragging || !boxRef.current) return;
-    const rect = boxRef.current.parentElement.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const clampedY = Math.max(0, Math.min(y, chartHeight));
+    if (!isDragging || !boxRef.current || !initialBox || dragStartY === null) return;
+    
+    const deltaY = e.clientY - dragStartY;
     
     if (isDragging === 'move') {
-      const deltaY = clampedY - box.entryY;
-      onUpdate({ ...box, entryY: clampedY, tpY: box.tpY + deltaY, slY: box.slY + deltaY });
+      const newEntryY = Math.max(20, Math.min(initialBox.entryY + deltaY, chartHeight - 20));
+      const newTpY = initialBox.tpY + deltaY;
+      const newSlY = initialBox.slY + deltaY;
+      onUpdate({ ...box, entryY: newEntryY, tpY: newTpY, slY: newSlY });
     } else if (isDragging === 'top') {
-      onUpdate({ ...box, tpY: clampedY });
+      const newTpY = Math.max(0, Math.min(initialBox.tpY + deltaY, box.entryY - 10));
+      onUpdate({ ...box, tpY: newTpY });
     } else if (isDragging === 'bottom') {
-      onUpdate({ ...box, slY: clampedY });
+      const newSlY = Math.max(box.entryY + 10, Math.min(initialBox.slY + deltaY, chartHeight));
+      onUpdate({ ...box, slY: newSlY });
     }
-  }, [isDragging, box, onUpdate, chartHeight]);
+  }, [isDragging, box, onUpdate, chartHeight, initialBox, dragStartY]);
   
-  const handleMouseUp = useCallback(() => setIsDragging(null), []);
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(null);
+    setDragStartY(null);
+    setInitialBox(null);
+  }, []);
   
   useEffect(() => {
     if (isDragging) {
@@ -53,23 +66,62 @@ const DrawingBox = ({ box, onUpdate, onDelete, chartHeight }) => {
   }, [isDragging, handleMouseMove, handleMouseUp]);
   
   return (
-    <div ref={boxRef} className="absolute pointer-events-auto" style={{ left: box.x, top: tpY, width: box.width, height }}>
-      <div className="absolute w-full bg-[#00E599]/20 border-t-2 border-[#00E599] cursor-ns-resize"
-        style={{ top: 0, height: entryFromTop }} onMouseDown={(e) => handleMouseDown(e, 'top')}>
-        <span className="absolute top-1 left-2 text-[10px] font-mono text-[#00E599] font-bold">TP {isLong ? '↑' : '↓'}</span>
+    <div 
+      ref={boxRef} 
+      className={`absolute pointer-events-auto transition-shadow ${isSelected ? 'ring-2 ring-primary ring-offset-1' : ''}`} 
+      style={{ left: box.x, top: tpY, width: box.width, height }}
+      onClick={(e) => { e.stopPropagation(); onSelect(box.id); }}
+    >
+      {/* TP Zone - Top drag handle */}
+      <div 
+        className="absolute w-full bg-[#00E599]/20 border-t-2 border-[#00E599] cursor-ns-resize hover:bg-[#00E599]/30 transition-colors"
+        style={{ top: 0, height: entryFromTop }} 
+        onMouseDown={(e) => handleMouseDown(e, 'top')}
+      >
+        <span className="absolute top-1 left-2 text-[10px] font-mono text-[#00E599] font-bold select-none">TP {isLong ? '↑' : '↓'}</span>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-1 bg-[#00E599]/50 rounded" />
       </div>
-      <div className="absolute w-full h-1 bg-white cursor-move" style={{ top: entryFromTop }} onMouseDown={(e) => handleMouseDown(e, 'move')}>
-        <span className="absolute -top-4 left-2 text-[10px] font-mono text-white bg-black/70 px-1 rounded">ENTRY</span>
-        <span className="absolute -top-4 right-2 text-[11px] font-mono text-black bg-primary px-2 rounded font-bold">R:R {rr}</span>
+      
+      {/* Entry Line - Move handle */}
+      <div 
+        className="absolute w-full h-3 bg-white/80 cursor-move hover:bg-white transition-colors flex items-center justify-center" 
+        style={{ top: entryFromTop - 1 }} 
+        onMouseDown={(e) => handleMouseDown(e, 'move')}
+      >
+        <Move className="w-3 h-3 text-black/50" />
+        <span className="absolute -top-5 left-2 text-[10px] font-mono text-white bg-black/80 px-1.5 py-0.5 rounded select-none">ENTRY</span>
+        <span className="absolute -top-5 right-2 text-[11px] font-mono text-black bg-primary px-2 py-0.5 rounded font-bold select-none">R:R {rr}</span>
       </div>
-      <div className="absolute w-full bg-[#FF3B30]/20 border-b-2 border-[#FF3B30] cursor-ns-resize"
-        style={{ top: entryFromTop, height: height - entryFromTop }} onMouseDown={(e) => handleMouseDown(e, 'bottom')}>
-        <span className="absolute bottom-1 left-2 text-[10px] font-mono text-[#FF3B30] font-bold">SL {isLong ? '↓' : '↑'}</span>
+      
+      {/* SL Zone - Bottom drag handle */}
+      <div 
+        className="absolute w-full bg-[#FF3B30]/20 border-b-2 border-[#FF3B30] cursor-ns-resize hover:bg-[#FF3B30]/30 transition-colors"
+        style={{ top: entryFromTop + 2, height: height - entryFromTop - 2 }} 
+        onMouseDown={(e) => handleMouseDown(e, 'bottom')}
+      >
+        <span className="absolute bottom-1 left-2 text-[10px] font-mono text-[#FF3B30] font-bold select-none">SL {isLong ? '↓' : '↑'}</span>
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#FF3B30]/50 rounded" />
       </div>
-      <button className="absolute -right-2 -top-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 z-50"
-        onClick={() => onDelete(box.id)}>
-        <Trash2 className="w-3 h-3" />
-      </button>
+      
+      {/* Action buttons - only show when selected */}
+      {isSelected && (
+        <div className="absolute -right-3 -top-3 flex flex-col gap-1 z-50">
+          <button 
+            className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 shadow-lg"
+            onClick={(e) => { e.stopPropagation(); onDuplicate(box); }}
+            title="Duplicate box"
+          >
+            <Copy className="w-3 h-3" />
+          </button>
+          <button 
+            className="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 shadow-lg"
+            onClick={(e) => { e.stopPropagation(); onDelete(box.id); }}
+            title="Delete box"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -228,8 +280,7 @@ const SMCOverlay = ({ indicators, chartWidth, chartHeight, priceData }) => {
 
 const ChartOverlay = ({ smcIndicators, isDrawingMode, onToggleDrawing, chartDimensions, priceData }) => {
   const [boxes, setBoxes] = useState([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [startPoint, setStartPoint] = useState(null);
+  const [selectedBoxId, setSelectedBoxId] = useState(null);
   const overlayRef = useRef(null);
   
   const chartWidth = chartDimensions?.width || 800;
@@ -237,43 +288,78 @@ const ChartOverlay = ({ smcIndicators, isDrawingMode, onToggleDrawing, chartDime
   
   const hasActiveSMC = Object.values(smcIndicators || {}).some(Boolean);
   
-  const handleMouseDown = (e) => {
+  // Create a single box on click (not drag) - only if no box exists or none selected
+  const handleClick = (e) => {
     if (!isDrawingMode) return;
+    
+    // If clicking on empty space and in drawing mode, create new box OR select existing
     const rect = overlayRef.current.getBoundingClientRect();
-    setIsDrawing(true);
-    setStartPoint({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  };
-  
-  const handleMouseUp = (e) => {
-    if (!isDrawing || !startPoint) return;
-    const rect = overlayRef.current.getBoundingClientRect();
-    const endY = e.clientY - rect.top;
+    const clickY = e.clientY - rect.top;
+    const clickX = e.clientX - rect.left;
+    
+    // Check if click is on an existing box area - if so, don't create new
+    const clickedOnBox = boxes.some(box => {
+      const boxTop = Math.min(box.tpY, box.slY);
+      const boxBottom = Math.max(box.tpY, box.slY);
+      return clickY >= boxTop && clickY <= boxBottom && clickX >= box.x && clickX <= box.x + box.width;
+    });
+    
+    if (clickedOnBox) return;
+    
+    // Create new box at click position with default size
+    const defaultTPDistance = 50;  // pixels above entry
+    const defaultSLDistance = 30;  // pixels below entry
     
     const newBox = {
       id: Date.now(),
-      x: startPoint.x - 60,
+      x: clickX - 60,
       width: 120,
-      entryY: startPoint.y,
-      tpY: Math.min(startPoint.y, endY),
-      slY: Math.max(startPoint.y, endY),
+      entryY: clickY,
+      tpY: clickY - defaultTPDistance,
+      slY: clickY + defaultSLDistance,
     };
     
     setBoxes(prev => [...prev, newBox]);
-    setIsDrawing(false);
-    setStartPoint(null);
+    setSelectedBoxId(newBox.id);
+  };
+  
+  // Deselect when clicking outside
+  const handleOverlayClick = (e) => {
+    if (e.target === overlayRef.current) {
+      if (!isDrawingMode) {
+        setSelectedBoxId(null);
+      } else {
+        handleClick(e);
+      }
+    }
   };
   
   const updateBox = (updatedBox) => setBoxes(prev => prev.map(b => b.id === updatedBox.id ? updatedBox : b));
-  const deleteBox = (boxId) => setBoxes(prev => prev.filter(b => b.id !== boxId));
-  const clearAllBoxes = () => setBoxes([]);
+  const deleteBox = (boxId) => {
+    setBoxes(prev => prev.filter(b => b.id !== boxId));
+    if (selectedBoxId === boxId) setSelectedBoxId(null);
+  };
+  const clearAllBoxes = () => {
+    setBoxes([]);
+    setSelectedBoxId(null);
+  };
+  
+  const duplicateBox = (box) => {
+    const newBox = {
+      ...box,
+      id: Date.now(),
+      x: box.x + 50, // Offset the duplicate
+    };
+    setBoxes(prev => [...prev, newBox]);
+    setSelectedBoxId(newBox.id);
+  };
   
   return (
     <>
       <div
         ref={overlayRef}
         className={`absolute inset-0 ${isDrawingMode ? 'cursor-crosshair z-20' : 'pointer-events-none z-10'}`}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
+        onClick={handleOverlayClick}
       >
         {hasActiveSMC && (
           <SMCOverlay 
@@ -285,35 +371,44 @@ const ChartOverlay = ({ smcIndicators, isDrawingMode, onToggleDrawing, chartDime
         )}
         
         {boxes.map(box => (
-          <DrawingBox key={box.id} box={box} onUpdate={updateBox} onDelete={deleteBox} chartHeight={chartHeight} />
+          <DrawingBox 
+            key={box.id} 
+            box={box} 
+            onUpdate={updateBox} 
+            onDelete={deleteBox} 
+            onDuplicate={duplicateBox}
+            chartHeight={chartHeight}
+            isSelected={selectedBoxId === box.id}
+            onSelect={setSelectedBoxId}
+          />
         ))}
-        
-        {isDrawing && startPoint && (
-          <div className="absolute border-2 border-dashed border-white/50 bg-white/10"
-            style={{ left: startPoint.x - 60, top: startPoint.y, width: 120, height: 2 }} />
-        )}
       </div>
       
-      <div className="absolute bottom-4 right-4 z-30 flex items-center gap-1 bg-card/95 backdrop-blur-sm rounded-lg p-1.5 border border-border/40 shadow-lg">
-        <Button
-          variant={isDrawingMode ? "default" : "outline"}
-          size="sm"
-          onClick={onToggleDrawing}
-          className={`h-8 px-3 text-xs ${isDrawingMode ? 'bg-primary text-primary-foreground' : ''}`}
-        >
-          <Square className="w-3.5 h-3.5 mr-1.5" />
-          R:R Box
-        </Button>
-        
-        {boxes.length > 0 && (
-          <Button variant="outline" size="sm" onClick={clearAllBoxes} className="h-8 px-2 text-xs hover:text-red-400">
-            <RotateCcw className="w-3.5 h-3.5 mr-1" />
-            Clear ({boxes.length})
-          </Button>
-        )}
-      </div>
+      {/* R:R Box controls removed from here - will be placed above chart */}
     </>
   );
 };
+
+// Export the RRBoxControls separately for placement above chart
+export const RRBoxControls = ({ isDrawingMode, onToggleDrawing, boxCount, onClearAll }) => (
+  <div className="flex items-center gap-2">
+    <Button
+      variant={isDrawingMode ? "default" : "outline"}
+      size="sm"
+      onClick={onToggleDrawing}
+      className={`h-8 px-3 text-xs ${isDrawingMode ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+    >
+      <Square className="w-3.5 h-3.5 mr-1.5" />
+      R:R Box {isDrawingMode && '(Click to place)'}
+    </Button>
+    
+    {boxCount > 0 && (
+      <Button variant="outline" size="sm" onClick={onClearAll} className="h-8 px-2 text-xs hover:text-red-400 bg-background">
+        <RotateCcw className="w-3.5 h-3.5 mr-1" />
+        Clear ({boxCount})
+      </Button>
+    )}
+  </div>
+);
 
 export default ChartOverlay;
