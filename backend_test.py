@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 class TradingAPITester:
-    def __init__(self, base_url="https://tradegenius-50.preview.emergentagent.com"):
+    def __init__(self, base_url="https://trade-wizard-69.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
