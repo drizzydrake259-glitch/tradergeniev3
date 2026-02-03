@@ -282,14 +282,14 @@ const TradingDashboard = () => {
   };
 
   return (
-    <div className="h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background">
       <Header currentCoin={currentCoinData} intelligence={intelligence} />
 
-      {/* Main content wrapper - allows scroll for scanner */}
-      <div className="flex-1 flex flex-col overflow-y-auto">
-        {/* Primary dashboard area - sized to viewport minus header */}
-        <div className="flex-shrink-0 min-h-0" style={{ height: 'calc(100vh - 64px)' }}>
-          <div className="h-full flex flex-col">
+      {/* Main container with overflow scroll */}
+      <div className="overflow-y-auto" style={{ height: 'calc(100vh - 64px)' }}>
+        {/* Primary dashboard - takes viewport height minus header */}
+        <div style={{ minHeight: 'calc(100vh - 64px)' }}>
+          <div className="h-full flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
             {/* Resizable panels - full height */}
             <div className="flex-1 min-h-0">
               <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -414,9 +414,9 @@ const TradingDashboard = () => {
           </div>
         </div>
 
-        {/* Scanner Panel - Below the fold, scroll to see */}
+        {/* Scanner Panel - Below the fold */}
         {!isChartFullscreen && (
-          <div className="flex-shrink-0 px-4 py-4 border-t border-border/40 bg-background">
+          <div className="px-4 py-4 border-t border-border/40 bg-background">
             <ScannerPanel
               signals={scannerSignals}
               isLoading={isScanning}
